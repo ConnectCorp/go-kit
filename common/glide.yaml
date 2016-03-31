@@ -1,0 +1,18 @@
+package: github.com/ConnectCorp/go-kit/common
+import:
+- package: github.com/dgrijalva/jwt-go
+- package: github.com/go-kit/kit
+  subpackages:
+  - log
+  - metrics
+  - metrics/expvar
+  - metrics/prometheus
+- package: github.com/ibrt/go-xerror
+  subpackages:
+  - xerror
+- package: github.com/prometheus/client_golang
+  subpackages:
+  - prometheus
+- package: golang.org/x/net
+  subpackages:
+  - context
