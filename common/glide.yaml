@@ -7,7 +7,7 @@ import:
   - metrics
   - metrics/expvar
   - metrics/prometheus
-- package: github.com/ibrt/go-xerror
+- package: gopkg.in/ibrt/go-xerror.v2
   subpackages:
   - xerror
 - package: github.com/prometheus/client_golang
