@@ -5,7 +5,7 @@ import "sync"
 //Observer interface
 type Observer interface {
 	Publish(event string, data interface{}) error
-	Subscribe(event string, eventListener EventListener) error
+	Subscribe(event string, eventListener EventListener)
 }
 
 //EventListener is callback function
