@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/ibrt/go-xerror/xerror"
+	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"strconv"
 	"time"
 )
@@ -33,34 +33,34 @@ var (
 func VerifyToken(token string, jwtPublicKey []byte) (int64, string, error) {
 	decodedToken, err := jwtParser.Parse(token, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok || token.Header["kid"].(string) != tokenKeyID {
-			return nil, xerror.New(ErrorInvalidToken).WithDebug(token)
+			return nil, xerror.New(ErrorInvalidToken, token)
 		}
 		return jwtPublicKey, nil
 	})
 	if err != nil {
-		return 0, "", xerror.Wrap(err).WithMessages(ErrorInvalidToken).WithDebug(token)
+		return 0, "", xerror.Wrap(err, ErrorInvalidToken, token)
 	}
 
 	if decodedToken.Claims["v"].(string) != tokenVersion {
-		return 0, "", xerror.Wrap(err).WithMessages(ErrorInvalidToken).WithDebug(token)
+		return 0, "", xerror.Wrap(err, ErrorInvalidToken, token)
 	}
 
 	userID, err := strconv.ParseInt(decodedToken.Claims["sub"].(string), 10, 64)
 	if err != nil {
-		return 0, "", xerror.Wrap(err).WithMessages(ErrorInvalidToken).WithDebug(token)
+		return 0, "", xerror.Wrap(err, ErrorInvalidToken, token)
 	}
 
 	role := decodedToken.Claims["role"].(string)
 	if role != TokenUserRole && role != TokenSystemRole {
-		return 0, "", xerror.Wrap(err).WithMessages(ErrorInvalidToken).WithDebug(token)
+		return 0, "", xerror.Wrap(err, ErrorInvalidToken, token)
 	}
 
 	expV, err := decodedToken.Claims["exp"].(json.Number).Int64()
 	if err != nil {
-		return 0, "", xerror.Wrap(err).WithMessages(ErrorInvalidToken).WithDebug(token)
+		return 0, "", xerror.Wrap(err, ErrorInvalidToken, token)
 	}
 	if time.Unix(expV, 0).Before(time.Now()) {
-		return 0, "", xerror.New(ErrorExpiredToken).WithDebug(token)
+		return 0, "", xerror.New(ErrorExpiredToken, token)
 	}
 
 	return userID, role, nil
@@ -79,7 +79,7 @@ func IssueCustomToken(userID int64, role string, expirationTime time.Time, key [
 	t.Claims["exp"] = expirationTime.Unix()
 	s, err := t.SignedString(key)
 	if err != nil {
-		return "", xerror.Wrap(err).WithMessages(ErrorUnableToSignToken).WithDebug(t)
+		return "", xerror.Wrap(err, ErrorUnableToSignToken, t)
 	}
 	return s, nil
 }

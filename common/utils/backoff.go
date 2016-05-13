@@ -1,8 +1,12 @@
 package utils
 
 import (
-	"github.com/ibrt/go-xerror/xerror"
+	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"time"
+)
+
+const (
+	ErrorTooManyFailedAttempts = "too many failed attempts"
 )
 
 const (
@@ -20,7 +24,7 @@ func Backoff(baseDelay time.Duration, retryCount int, do func() error) error {
 		time.Sleep(baseDelay)
 		baseDelay *= 2
 	}
-	return xerror.Wrap(err)
+	return xerror.Wrap(err, ErrorTooManyFailedAttempts)
 }
 
 func MustBackoff(baseDelay time.Duration, retryCount int, do func() error) {

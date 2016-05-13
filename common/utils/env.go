@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/base64"
-	"github.com/ibrt/go-xerror/xerror"
+	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"net/url"
 )
 
@@ -17,7 +17,7 @@ func (b *EnvBinary) Decode(s string) error {
 		*b = EnvBinary(decoded)
 		return nil
 	} else {
-		return xerror.Wrap(err).WithMessages(ErrorInvalidEnv)
+		return xerror.Wrap(err, ErrorInvalidEnv)
 	}
 }
 
@@ -30,6 +30,6 @@ func (u *EnvURL) Decode(s string) error {
 		u.URL = decoded
 		return nil
 	} else {
-		return xerror.Wrap(err).WithMessages(ErrorInvalidEnv)
+		return xerror.Wrap(err, ErrorInvalidEnv)
 	}
 }
