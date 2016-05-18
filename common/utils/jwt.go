@@ -63,20 +63,25 @@ func VerifyToken(token string, jwtPublicKey []byte) (int64, string, error) {
 		return 0, "", xerror.New(ErrorExpiredToken, token)
 	}
 
+	// TODO: Maybe verify iss and aud. Not needed for now since we have one key per environment.
+
 	return userID, role, nil
 }
 
-func IssueToken(userID int64, key []byte) (string, error) {
-	return IssueCustomToken(userID, TokenUserRole, time.Now().Add(tokenLifeTime), key)
+func IssueToken(userID int64, issuer, audience string, key []byte) (string, error) {
+	return IssueCustomToken(userID, TokenUserRole, issuer, audience, time.Now().Add(tokenLifeTime), key)
 }
 
-func IssueCustomToken(userID int64, role string, expirationTime time.Time, key []byte) (string, error) {
+func IssueCustomToken(userID int64, role, issuer, audience string, expirationTime time.Time, key []byte) (string, error) {
 	t := jwt.New(jwt.SigningMethodRS256)
 	t.Header["kid"] = tokenKeyID
 	t.Claims["v"] = tokenVersion
 	t.Claims["sub"] = fmt.Sprintf("%v", userID)
 	t.Claims["role"] = role
+	t.Claims["iss"] = issuer
+	t.Claims["aud"] = audience
 	t.Claims["exp"] = expirationTime.Unix()
+	t.Claims["iat"] = time.Now().Unix()
 	s, err := t.SignedString(key)
 	if err != nil {
 		return "", xerror.Wrap(err, ErrorUnableToSignToken, t)
