@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/ConnectCorp/go-kit/common/utils"
+	"github.com/ConnectCorp/go-kit/kit/utils"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"

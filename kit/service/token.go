@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/ConnectCorp/go-kit/common/utils"
+	"github.com/ConnectCorp/go-kit/kit/utils"
 	"github.com/go-kit/kit/endpoint"
 	"golang.org/x/net/context"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"

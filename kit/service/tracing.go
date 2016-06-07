@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/ConnectCorp/go-kit/common/utils"
+	"github.com/ConnectCorp/go-kit/kit/utils"
 	"golang.org/x/net/context"
 	"net/http"
 )
