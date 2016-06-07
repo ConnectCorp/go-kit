@@ -53,9 +53,3 @@ func TestErrorToStatusCode(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, ErrorToStatusCode(xerror.New("some-error")))
 	assert.Equal(t, http.StatusInternalServerError, ErrorToStatusCode(fmt.Errorf("some-error")))
 }
-
-func TestRequestPathExtractor(t *testing.T) {
-	req, err := http.NewRequest("POST", "http://url/path", nil)
-	assert.Nil(t, err)
-	assert.Equal(t, "/path", ctxRequestPath(RequestPathExtractor(context.Background(), req)))
-}
