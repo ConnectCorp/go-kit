@@ -11,12 +11,11 @@ func TestBackoff(t *testing.T) {
 	count := 0
 
 	err := Backoff(time.Nanosecond, 10, func() error {
-		count += 1
+		count++
 		if count < 5 {
 			return xerror.New("some-error")
-		} else {
-			return nil
 		}
+		return nil
 	})
 
 	assert.Nil(t, err)
@@ -25,7 +24,7 @@ func TestBackoff(t *testing.T) {
 	count = 0
 
 	err = Backoff(time.Nanosecond, 10, func() error {
-		count += 1
+		count++
 		return xerror.New("some-error %v", count)
 	})
 

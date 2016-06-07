@@ -13,7 +13,7 @@ func TestSyncObserver(t *testing.T) {
 	}
 
 	observer := NewSyncObserver()
-	recordedEvents := make([]*recordedEvent, 0)
+	var recordedEvents []*recordedEvent
 
 	eventRecorder := func(eventName string, eventData interface{}) error {
 		recordedEvents = append(recordedEvents, &recordedEvent{eventName, eventData})

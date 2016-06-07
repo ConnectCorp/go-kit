@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	// ErrorSubscriber is return when an error occurs while processing an event in a subscriber.
 	ErrorSubscriber = "subscriber error"
 )
 
@@ -26,7 +27,7 @@ type syncObserver struct {
 }
 
 // NewSyncObserver instantiates a new synchronous, thread-safe observer.
-func NewSyncObserver() *syncObserver {
+func NewSyncObserver() Observer {
 	return &syncObserver{
 		mutex:       &sync.Mutex{},
 		subscribers: make(map[string][]EventSubscriber),

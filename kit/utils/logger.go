@@ -7,14 +7,17 @@ import (
 	"io"
 )
 
+// FormattedJSONLogger is a go-kit logger that formats output as JSON.
 type FormattedJSONLogger struct {
 	w io.Writer
 }
 
+// NewFormattedJSONLogger initializes a new FormattedJSONLogger.
 func NewFormattedJSONLogger(w io.Writer) kitlog.Logger {
 	return &FormattedJSONLogger{w}
 }
 
+// Log implements the go-kit log.Logger interface.
 func (l *FormattedJSONLogger) Log(keyvals ...interface{}) error {
 	m := make(map[string]interface{}, (len(keyvals)+1)/2)
 

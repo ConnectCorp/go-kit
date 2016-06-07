@@ -12,19 +12,29 @@ import (
 )
 
 const (
-	DefaultTokenLifetime = time.Hour * 24 * 365 // One year.
+	// DefaultTokenLifetime is the default lifetime for a token (one year).
+	DefaultTokenLifetime = time.Hour * 24 * 365
 )
 
 const (
-	ErrorInvalidKeyID       = "invalid key ID: %v"
+	// ErrorInvalidKeyID is returned when an invalid key ID is provided.
+	ErrorInvalidKeyID = "invalid key ID: %v"
+	// ErrorInvalidKeyMaterial is returned when invalid key material is provided.
 	ErrorInvalidKeyMaterial = "invalid key material"
-	ErrorInvalidIssuer      = "invalid issuer: %v"
-	ErrorInvalidAudience    = "invalid audience: %v"
-	ErrorUnableToSignToken  = "unable to sign token"
-	ErrorInvalidSubject     = "invalid subject"
-	ErrorInvalidToken       = "invalid token"
+	// ErrorInvalidIssuer is returned when an invalid issuer is provided.
+	ErrorInvalidIssuer = "invalid issuer: %v"
+	// ErrorInvalidAudience is returned when an invalid audience is provided.
+	ErrorInvalidAudience = "invalid audience: %v"
+	// ErrorUnableToSignToken is returned when signing a token fails.
+	ErrorUnableToSignToken = "unable to sign token"
+	// ErrorInvalidSubject is returned when an invalid subject is provided.
+	ErrorInvalidSubject = "invalid subject"
+	// ErrorInvalidToken is returned when validation fails due to an invalid token.
+	ErrorInvalidToken = "invalid token"
+	// ErrorInvalidTokenHeader  is returned when validation fails due to an invalid token header.
 	ErrorInvalidTokenHeader = "invalid token header"
-	ErrorExpiredToken       = "expired token"
+	// ErrorExpiredToken is returned when validation fails due to an expired token.
+	ErrorExpiredToken = "expired token"
 )
 
 const (
@@ -42,6 +52,7 @@ const (
 	issuedAtHeader      = "iat"
 )
 
+// TokenIssuer describes the capability of issuing tokens.
 type TokenIssuer interface {
 	IssueUserToken(sub int64) (string, error)
 	IssueSystemToken() (string, error)
@@ -55,6 +66,7 @@ type tokenIssuer struct {
 	lifetime   time.Duration
 }
 
+// NewTokenIssuer initializes a new default TokenIssuer.
 func NewTokenIssuer(keyID string, privateKey []byte, issuer, audience string, lifetime time.Duration) (TokenIssuer, error) {
 	if err := validateParams(keyID, privateKey, issuer, audience); err != nil {
 		return nil, err
@@ -100,6 +112,7 @@ func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
 	return s, nil
 }
 
+// TokenVerifier describes the capability of verifying tokens.
 type TokenVerifier interface {
 	VerifyToken(t string) (int64, string, error)
 }
@@ -112,6 +125,7 @@ type tokenVerifier struct {
 	jwtParser *jwt.Parser
 }
 
+// NewTokenVerifier initializes a new default TokenVerifier.
 func NewTokenVerifier(keyID string, publicKey []byte, issuer, audience string) (TokenVerifier, error) {
 	if err := validateParams(keyID, publicKey, issuer, audience); err != nil {
 		return nil, err

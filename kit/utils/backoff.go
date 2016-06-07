@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	// ErrorTooManyFailedAttempts is returned when an operation fails retryCount times.
 	ErrorTooManyFailedAttempts = "too many failed attempts"
 )
 
@@ -14,6 +15,7 @@ const (
 	defaultRetryCount = 10
 )
 
+// Backoff calls the given function at most retryCount times, increasing the baseDelay exponentially between calls.
 func Backoff(baseDelay time.Duration, retryCount int, do func() error) error {
 	var err error
 	for i := 0; i < retryCount; i++ {
@@ -27,6 +29,7 @@ func Backoff(baseDelay time.Duration, retryCount int, do func() error) error {
 	return xerror.Wrap(err, ErrorTooManyFailedAttempts)
 }
 
+// MustBackoff is like Backoff but panics on final error.
 func MustBackoff(baseDelay time.Duration, retryCount int, do func() error) {
 	if err := Backoff(baseDelay, retryCount, do); err != nil {
 		panic(err)
