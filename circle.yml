@@ -1,0 +1,38 @@
+
+machine:
+  environment:
+    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME" # E.g. 'github.com/ConnectCorp/go-auth'.
+    PRIVATE_GOPATH: "$(echo $GOPATH | sed 's/:.*$//g')" # Needed because CircleCI has two paths in the GOPATH.
+    PACKAGE_NAME: "$(echo $CIRCLE_PROJECT_REPONAME | sed 's/go-//g')" # E.g. for repo 'go-auth', this is 'auth'.
+
+dependencies:
+  pre:
+      # Install go 1.6 (the default in CircleCI is 1.5).
+      - sudo rm -rf /usr/local/go
+      - cd ~/cache && if [ ! -e go1.6.linux-amd64.tar.gz ]; then wget https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz; fi
+      - cd ~/cache && sudo tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz
+      - go version
+      # Install Glide.
+      - cd ~/cache && if [ ! -e glide-0.9.1-linux-amd64.tar.gz ]; then wget https://github.com/Masterminds/glide/releases/download/0.9.1/glide-0.9.1-linux-amd64.tar.gz; fi
+      - cd ~/cache && if [ ! -d linux-amd64 ]; then tar xvzf glide-0.9.1-linux-amd64.tar.gz; fi
+      - sudo cp ~/cache/linux-amd64/glide /usr/bin/glide
+      - glide --version
+      # Install test utils
+      - go get github.com/mattn/goveralls
+      - go get golang.org/x/tools/cmd/cover
+      - go get github.com/golang/lint/golint
+      - go get github.com/GeertJohan/fgt
+      - go get github.com/pierrre/gotestcover
+  override:
+    # Copy repository to GOPATH.
+    - rsync -azC --delete ./ "$PRIVATE_GOPATH/src/$IMPORT_PATH/"
+
+test:
+  pre:
+    - fgt golint "$IMPORT_PATH/$PACKAGE_NAME/..."
+    - go vet "$IMPORT_PATH/$PACKAGE_NAME/..."
+    - fgt go fmt "$IMPORT_PATH/$PACKAGE_NAME/..."
+    - cd "$PRIVATE_GOPATH/src/$IMPORT_PATH/$PACKAGE_NAME" && glide install; exit 0
+  override:
+    - cd "$PRIVATE_GOPATH/src/$IMPORT_PATH/$PACKAGE_NAME" && gotestcover -coverprofile="cover.out" -race -covermode="count" -v $(glide novendor)
+    - cd "$PRIVATE_GOPATH/src/$IMPORT_PATH/$PACKAGE_NAME" && goveralls -coverprofile="cover.out" -service=circle-ci -repotoken=$COVERALLS_TOKEN
