@@ -38,9 +38,14 @@ const (
 )
 
 const (
+	// TokenUserRole describes a user token.
+	TokenUserRole = "user"
+	// TokenSystemRole describes a system token.
+	TokenSystemRole = "system"
+)
+
+const (
 	currentTokenVersion = "v1"
-	tokenUserRole       = "user"
-	tokenSystemRole     = "system"
 	defaultSystemUserID = 0
 	keyIDHeader         = "kid"
 	tokenVersionHeader  = "v"
@@ -81,15 +86,15 @@ func NewTokenIssuer(keyID string, privateKey []byte, issuer, audience string, li
 }
 
 func (ti *tokenIssuer) IssueUserToken(sub int64) (string, error) {
-	return ti.issueToken(sub, tokenUserRole)
+	return ti.issueToken(sub, TokenUserRole)
 }
 
 func (ti *tokenIssuer) IssueSystemToken() (string, error) {
-	return ti.issueToken(defaultSystemUserID, tokenSystemRole)
+	return ti.issueToken(defaultSystemUserID, TokenSystemRole)
 }
 
 func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
-	if role == tokenUserRole && sub <= 0 {
+	if role == TokenUserRole && sub <= 0 {
 		return "", xerror.New(ErrorInvalidSubject, sub)
 	}
 
@@ -162,10 +167,10 @@ func (tv *tokenVerifier) VerifyToken(t string) (int64, string, error) {
 	if err != nil {
 		return 0, "", err
 	}
-	if role != tokenUserRole && role != tokenSystemRole {
+	if role != TokenUserRole && role != TokenSystemRole {
 		return 0, "", xerror.New(ErrorInvalidToken, t)
 	}
-	if role == tokenSystemRole && sub != defaultSystemUserID {
+	if role == TokenSystemRole && sub != defaultSystemUserID {
 		return 0, "", xerror.New(ErrorInvalidToken, t)
 	}
 
