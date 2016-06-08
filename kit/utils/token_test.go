@@ -100,7 +100,7 @@ func TestIssue(t *testing.T) {
 	sub, role, err := tv.VerifyToken(ut)
 	assert.Nil(t, err)
 	assert.EqualValues(t, 1, sub)
-	assert.Equal(t, tokenUserRole, role)
+	assert.Equal(t, TokenUserRole, role)
 
 	st, err := ti.IssueSystemToken()
 	assert.Nil(t, err)
@@ -108,19 +108,19 @@ func TestIssue(t *testing.T) {
 	sub, role, err = tv.VerifyToken(st)
 	assert.Nil(t, err)
 	assert.EqualValues(t, defaultSystemUserID, sub)
-	assert.Equal(t, tokenSystemRole, role)
+	assert.Equal(t, TokenSystemRole, role)
 }
 
 func TestVerify(t *testing.T) {
 	tv, err := NewTokenVerifier(keyID, publicKey, issuer, audience)
 	assert.Nil(t, err)
 
-	goodToken, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", tokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
+	goodToken, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	sub, role, err := tv.VerifyToken(goodToken)
 	assert.Nil(t, err)
 	assert.EqualValues(t, 1, sub)
-	assert.Equal(t, tokenUserRole, role)
+	assert.Equal(t, TokenUserRole, role)
 
 	_, _, err = tv.VerifyToken("")
 	assert.Equal(t, "invalid token: token contains an invalid number of segments", err.Error())
@@ -128,27 +128,27 @@ func TestVerify(t *testing.T) {
 	_, _, err = tv.VerifyToken("bad")
 	assert.Equal(t, "invalid token: token contains an invalid number of segments", err.Error())
 
-	badKeyID, err := issueTestToken(time.Now(), "k2", currentTokenVersion, "1", tokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
+	badKeyID, err := issueTestToken(time.Now(), "k2", currentTokenVersion, "1", TokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badKeyID)
 	assert.Equal(t, "invalid token: invalid token header", err.Error())
 
-	badKey, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", tokenUserRole, issuer, audience, DefaultTokenLifetime, otherPrivateKey)
+	badKey, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenUserRole, issuer, audience, DefaultTokenLifetime, otherPrivateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badKey)
 	assert.Equal(t, "invalid token: crypto/rsa: verification error", err.Error())
 
-	badTokenVersion, err := issueTestToken(time.Now(), keyID, "v2", "1", tokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
+	badTokenVersion, err := issueTestToken(time.Now(), keyID, "v2", "1", TokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badTokenVersion)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badSub, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "a", tokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
+	badSub, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "a", TokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badSub)
 	assert.Equal(t, "invalid token: strconv.ParseInt: parsing \"a\": invalid syntax", err.Error())
 
-	badSub, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1.1", tokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
+	badSub, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1.1", TokenUserRole, issuer, audience, DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badSub)
 	assert.Equal(t, "invalid token: strconv.ParseInt: parsing \"1.1\": invalid syntax", err.Error())
@@ -158,22 +158,22 @@ func TestVerify(t *testing.T) {
 	_, _, err = tv.VerifyToken(badRole)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badIssuer, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", tokenUserRole, "bad", audience, DefaultTokenLifetime, privateKey)
+	badIssuer, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenUserRole, "bad", audience, DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badIssuer)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badAudience, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", tokenUserRole, issuer, "bad", DefaultTokenLifetime, privateKey)
+	badAudience, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenUserRole, issuer, "bad", DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badAudience)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badSubForSystem, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", tokenSystemRole, issuer, audience, DefaultTokenLifetime, privateKey)
+	badSubForSystem, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenSystemRole, issuer, audience, DefaultTokenLifetime, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badSubForSystem)
 	assert.Equal(t, "invalid token", err.Error())
 
-	expired, err := issueTestToken(time.Now().Add(-time.Hour), keyID, currentTokenVersion, "1", tokenUserRole, issuer, audience, time.Minute, privateKey)
+	expired, err := issueTestToken(time.Now().Add(-time.Hour), keyID, currentTokenVersion, "1", TokenUserRole, issuer, audience, time.Minute, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(expired)
 	assert.True(t, strings.HasPrefix(err.Error(), "invalid token: token is expired"))
