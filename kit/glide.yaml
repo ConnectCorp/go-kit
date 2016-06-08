@@ -1,0 +1,27 @@
+package: github.com/ConnectCorp/go-kit/kit
+import:
+- package: github.com/davecgh/go-spew
+  subpackages:
+  - spew
+- package: github.com/dgrijalva/jwt-go
+- package: github.com/go-kit/kit
+  subpackages:
+  - endpoint
+  - log
+  - metrics
+  - metrics/expvar
+  - metrics/prometheus
+  - transport/http
+- package: github.com/prometheus/client_golang
+  subpackages:
+  - prometheus
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: gopkg.in/ibrt/go-xerror.v2
+  subpackages:
+  - xerror
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+- package: github.com/kelseyhightower/envconfig
