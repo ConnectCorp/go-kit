@@ -4,9 +4,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
+	"strings"
 	"testing"
 	"time"
-	"strings"
 )
 
 const (
@@ -176,7 +176,7 @@ func TestVerify(t *testing.T) {
 	expired, err := issueTestToken(time.Now().Add(-time.Hour), keyID, currentTokenVersion, "1", tokenUserRole, issuer, audience, time.Minute, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(expired)
-	assert.True(t, strings.HasPrefix(err.Error(),  "invalid token: token is expired"))
+	assert.True(t, strings.HasPrefix(err.Error(), "invalid token: token is expired"))
 }
 
 func TestIssuerInit(t *testing.T) {
