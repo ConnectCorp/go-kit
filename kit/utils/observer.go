@@ -19,8 +19,6 @@ type Observer interface {
 // EventSubscriber is a callback function for observed events.
 type EventSubscriber func(eventName string, eventData interface{}) error
 
-var noSubscribers = []EventSubscriber{}
-
 type syncObserver struct {
 	mutex       *sync.Mutex
 	subscribers map[string][]EventSubscriber
@@ -37,6 +35,9 @@ func NewSyncObserver() Observer {
 // Publish implements Observer interface.
 func (o *syncObserver) Publish(eventName string, eventData interface{}) error {
 	subscribers := o.safeGetSubscribers(eventName)
+	if subscribers == nil {
+		return nil
+	}
 	for _, subscriber := range subscribers {
 		if err := subscriber(eventName, eventData); err != nil {
 			return xerror.Wrap(err, ErrorSubscriber)
@@ -51,7 +52,7 @@ func (o *syncObserver) safeGetSubscribers(eventName string) []EventSubscriber {
 	if subscribers, ok := o.subscribers[eventName]; ok && len(subscribers) > 0 {
 		return append(make([]EventSubscriber, 0, len(subscribers)), subscribers...)
 	}
-	return noSubscribers
+	return nil
 }
 
 // Subscribe implement the Observer interface.

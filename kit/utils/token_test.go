@@ -6,6 +6,7 @@ import (
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"testing"
 	"time"
+	"strings"
 )
 
 const (
@@ -175,7 +176,7 @@ func TestVerify(t *testing.T) {
 	expired, err := issueTestToken(time.Now().Add(-time.Hour), keyID, currentTokenVersion, "1", tokenUserRole, issuer, audience, time.Minute, privateKey)
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(expired)
-	assert.Equal(t, "invalid token: token is expired", err.Error())
+	assert.True(t, strings.HasPrefix(err.Error(),  "invalid token: token is expired"))
 }
 
 func TestIssuerInit(t *testing.T) {

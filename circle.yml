@@ -17,7 +17,7 @@ dependencies:
       - cd ~/cache && sudo tar -C /usr/local -xzf go1.6.linux-amd64.tar.gz
       - go version
       # Install Glide.
-      - cd ~/cache && if [ ! -e glide-0.9.1-linux-amd64.tar.gz ]; then wget https://github.com/Masterminds/glide/releases/download/0.9.1/glide-0.9.1-linux-amd64.tar.gz; fi
+      - cd ~/cache && if [ ! -e glide-0.9.1-linux-amd64.tar.gz ]; then wget https://github.com/Masterminds/glide/releases/download/0.10.2/glide-0.10.2-linux-amd64.tar.gz; fi
       - cd ~/cache && if [ ! -d linux-amd64 ]; then tar xvzf glide-0.9.1-linux-amd64.tar.gz; fi
       - sudo cp ~/cache/linux-amd64/glide /usr/bin/glide
       - glide --version
