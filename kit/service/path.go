@@ -5,6 +5,10 @@ import (
 	"net/http"
 )
 
+const (
+	ctxLabelRequestPath = "requestPath"
+)
+
 // RequestPathExtractor is a go-kit before interceptor that puts the request path in the request context.
 func RequestPathExtractor(ctx context.Context, r *http.Request) context.Context {
 	return ctxWithRequestPath(ctx, r.URL.EscapedPath())

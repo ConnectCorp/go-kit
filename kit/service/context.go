@@ -4,10 +4,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-const (
-	ctxLabelRequestPath = "requestPath"
-)
-
 // EnsureString extracts a string from the context, returns "" if not found.
 func EnsureString(ctx context.Context, label string) string {
 	v := ctx.Value(label)
