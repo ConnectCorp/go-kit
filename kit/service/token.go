@@ -28,7 +28,7 @@ func ctxWithAuthorizedRole(ctx context.Context, authorizedRole string) context.C
 }
 
 // CtxAuthorizedRole extracts the verified role stored in the request context.
-func CtxAuthorizedRole(ctx context.Context) string {
+func ctxAuthorizedRole(ctx context.Context) string {
 	return EnsureString(ctx, ctxLabelAuthorizedRole)
 }
 
@@ -45,7 +45,7 @@ func ctxWithAuthorizedSub(ctx context.Context, authorizedUserID int64) context.C
 }
 
 // CtxAuthorizedSub extracts the verified sub stored in the request context.
-func CtxAuthorizedSub(ctx context.Context) int64 {
+func ctxAuthorizedSub(ctx context.Context) int64 {
 	return EnsureInt64(ctx, ctxLabelAuthorizedSub)
 }
 
@@ -56,6 +56,72 @@ func TokenExtractor(ctx context.Context, r *http.Request) context.Context {
 		return ctxWithToken(ctx, token)
 	}
 	return ctx
+}
+
+// AuthVerifier describes a system for ACL.
+type AuthVerifier interface {
+	AcceptSystemToken() AuthVerifier
+	AcceptAnyUserToken() AuthVerifier
+	AcceptUserTokenForSubs(subs ...int64) AuthVerifier
+	Verify() error
+}
+
+type contextAuthVerifier struct {
+	ctx                    context.Context
+	acceptSystemToken      bool
+	acceptAnyUserToken     bool
+	acceptUserTokenForSubs []int64
+}
+
+// NewContextAuthVerifier creates an AuthVerifier that uses the go-kit context for sourcing authorization data.
+func NewContextAuthVerifier(ctx context.Context) AuthVerifier {
+	return &contextAuthVerifier{
+		ctx:                    ctx,
+		acceptSystemToken:      false,
+		acceptAnyUserToken:     false,
+		acceptUserTokenForSubs: make([]int64, 0),
+	}
+}
+
+// AcceptSystemToken implements the AuthVerifier interface.
+func (av *contextAuthVerifier) AcceptSystemToken() AuthVerifier {
+	av.acceptSystemToken = true
+	return av
+}
+
+// AcceptAnyUserToken implements the AuthVerifier interface.
+func (av *contextAuthVerifier) AcceptAnyUserToken() AuthVerifier {
+	av.acceptAnyUserToken = true
+	return av
+}
+
+// AcceptUserTokenForSub implements the AuthVerifier interface.
+func (av *contextAuthVerifier) AcceptUserTokenForSubs(subs ...int64) AuthVerifier {
+	av.acceptUserTokenForSubs = append(av.acceptUserTokenForSubs, subs...)
+	return av
+}
+
+// Verify implements the AuthVerifier interface.
+func (av *contextAuthVerifier) Verify() error {
+	authorizedRole := ctxAuthorizedRole(av.ctx)
+	authorizedSub := ctxAuthorizedSub(av.ctx)
+
+	if authorizedRole == utils.TokenSystemRole && av.acceptSystemToken {
+		return nil
+	}
+
+	if authorizedRole == utils.TokenUserRole {
+		if av.acceptAnyUserToken {
+			return nil
+		}
+		for _, sub := range av.acceptUserTokenForSubs {
+			if sub == authorizedSub {
+				return nil
+			}
+		}
+	}
+
+	return xerror.New(ErrorForbidden, av)
 }
 
 // NewTokenMiddleware requires a valid token for the request, attaches verified role and sub in the context.

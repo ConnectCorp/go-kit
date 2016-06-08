@@ -86,3 +86,28 @@ func TestToken(t *testing.T) {
 	assert.Equal(t, "terminated", err.Error())
 
 }
+
+func TestAuthVerifier(t *testing.T) {
+	systemTokenCtx := ctxWithAuthorizedRole(context.Background(), utils.TokenSystemRole)
+	userTokenCtx1 := ctxWithAuthorizedSub(ctxWithAuthorizedRole(context.Background(), utils.TokenUserRole), 1)
+	userTokenCtx2 := ctxWithAuthorizedSub(ctxWithAuthorizedRole(context.Background(), utils.TokenUserRole), 2)
+	userTokenCtx3 := ctxWithAuthorizedSub(ctxWithAuthorizedRole(context.Background(), utils.TokenUserRole), 3)
+
+	assert.NotNil(t, NewContextAuthVerifier(systemTokenCtx).Verify())
+	assert.NotNil(t, NewContextAuthVerifier(userTokenCtx1).Verify())
+
+	assert.Nil(t, NewContextAuthVerifier(systemTokenCtx).AcceptSystemToken().Verify())
+	assert.NotNil(t, NewContextAuthVerifier(userTokenCtx1).AcceptSystemToken().Verify())
+
+	assert.NotNil(t, NewContextAuthVerifier(systemTokenCtx).AcceptAnyUserToken().Verify())
+	assert.Nil(t, NewContextAuthVerifier(userTokenCtx1).AcceptAnyUserToken().Verify())
+
+	assert.NotNil(t, NewContextAuthVerifier(systemTokenCtx).AcceptUserTokenForSubs(1).Verify())
+	assert.Nil(t, NewContextAuthVerifier(userTokenCtx1).AcceptUserTokenForSubs(1).Verify())
+	assert.NotNil(t, NewContextAuthVerifier(userTokenCtx2).AcceptUserTokenForSubs(1).Verify())
+
+	assert.NotNil(t, NewContextAuthVerifier(systemTokenCtx).AcceptUserTokenForSubs(1, 2).Verify())
+	assert.Nil(t, NewContextAuthVerifier(userTokenCtx1).AcceptUserTokenForSubs(1, 2).Verify())
+	assert.Nil(t, NewContextAuthVerifier(userTokenCtx2).AcceptUserTokenForSubs(1, 2).Verify())
+	assert.NotNil(t, NewContextAuthVerifier(userTokenCtx3).AcceptUserTokenForSubs(1, 2).Verify())
+}
