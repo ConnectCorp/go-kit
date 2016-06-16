@@ -42,7 +42,7 @@ const (
 )
 
 const (
-	// TokenUserRole describes an access user token.
+	// TokenAccessUserRole describes an access user token.
 	TokenAccessUserRole = "user"
 	// TokenRefreshUserRole describes a refresh user token.
 	TokenRefreshUserRole = "user-refresh"
