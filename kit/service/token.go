@@ -60,44 +60,44 @@ func TokenExtractor(ctx context.Context, r *http.Request) context.Context {
 
 // AuthVerifier describes a system for ACL.
 type AuthVerifier interface {
-	AcceptSystemToken() AuthVerifier
-	AcceptAnyUserToken() AuthVerifier
-	AcceptUserTokenForSubs(subs ...int64) AuthVerifier
+	AcceptAccessSystemToken() AuthVerifier
+	AcceptAnyAccessUserToken() AuthVerifier
+	AcceptAccessUserTokenForSubs(subs ...int64) AuthVerifier
 	Verify() error
 }
 
 type contextAuthVerifier struct {
-	ctx                    context.Context
-	acceptSystemToken      bool
-	acceptAnyUserToken     bool
-	acceptUserTokenForSubs []int64
+	ctx                          context.Context
+	acceptAccessSystemToken      bool
+	acceptAnyAccessUserToken     bool
+	acceptAccessUserTokenForSubs []int64
 }
 
 // NewContextAuthVerifier creates an AuthVerifier that uses the go-kit context for sourcing authorization data.
 func NewContextAuthVerifier(ctx context.Context) AuthVerifier {
 	return &contextAuthVerifier{
-		ctx:                    ctx,
-		acceptSystemToken:      false,
-		acceptAnyUserToken:     false,
-		acceptUserTokenForSubs: make([]int64, 0),
+		ctx: ctx,
+		acceptAccessSystemToken:      false,
+		acceptAnyAccessUserToken:     false,
+		acceptAccessUserTokenForSubs: make([]int64, 0),
 	}
 }
 
 // AcceptSystemToken implements the AuthVerifier interface.
-func (av *contextAuthVerifier) AcceptSystemToken() AuthVerifier {
-	av.acceptSystemToken = true
+func (av *contextAuthVerifier) AcceptAccessSystemToken() AuthVerifier {
+	av.acceptAccessSystemToken = true
 	return av
 }
 
 // AcceptAnyUserToken implements the AuthVerifier interface.
-func (av *contextAuthVerifier) AcceptAnyUserToken() AuthVerifier {
-	av.acceptAnyUserToken = true
+func (av *contextAuthVerifier) AcceptAnyAccessUserToken() AuthVerifier {
+	av.acceptAnyAccessUserToken = true
 	return av
 }
 
 // AcceptUserTokenForSub implements the AuthVerifier interface.
-func (av *contextAuthVerifier) AcceptUserTokenForSubs(subs ...int64) AuthVerifier {
-	av.acceptUserTokenForSubs = append(av.acceptUserTokenForSubs, subs...)
+func (av *contextAuthVerifier) AcceptAccessUserTokenForSubs(subs ...int64) AuthVerifier {
+	av.acceptAccessUserTokenForSubs = append(av.acceptAccessUserTokenForSubs, subs...)
 	return av
 }
 
@@ -106,15 +106,15 @@ func (av *contextAuthVerifier) Verify() error {
 	authorizedRole := ctxAuthorizedRole(av.ctx)
 	authorizedSub := ctxAuthorizedSub(av.ctx)
 
-	if authorizedRole == utils.TokenSystemRole && av.acceptSystemToken {
+	if authorizedRole == utils.TokenAccessSystemRole && av.acceptAccessSystemToken {
 		return nil
 	}
 
-	if authorizedRole == utils.TokenUserRole {
-		if av.acceptAnyUserToken {
+	if authorizedRole == utils.TokenAccessUserRole {
+		if av.acceptAnyAccessUserToken {
 			return nil
 		}
-		for _, sub := range av.acceptUserTokenForSubs {
+		for _, sub := range av.acceptAccessUserTokenForSubs {
 			if sub == authorizedSub {
 				return nil
 			}

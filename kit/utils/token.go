@@ -12,8 +12,10 @@ import (
 )
 
 const (
-	// DefaultTokenLifetime is the default lifetime for a token (one year).
-	DefaultTokenLifetime = time.Hour * 24 * 365
+	// DefaultAccessTokenLifetime is the default lifetime for an access token.
+	DefaultAccessTokenLifetime = time.Hour * 24
+	// DefaultRefreshTokenLifetime is the default lifetime for a refresh token.
+	DefaultRefreshTokenLifetime = time.Hour * 24 * 365
 )
 
 const (
@@ -29,6 +31,8 @@ const (
 	ErrorUnableToSignToken = "unable to sign token"
 	// ErrorInvalidSubject is returned when an invalid subject is provided.
 	ErrorInvalidSubject = "invalid subject"
+	// ErrorInvalidRole is returned when an invalid role is provided.
+	ErrorInvalidRole = "invalid role"
 	// ErrorInvalidToken is returned when validation fails due to an invalid token.
 	ErrorInvalidToken = "invalid token"
 	// ErrorInvalidTokenHeader  is returned when validation fails due to an invalid token header.
@@ -38,10 +42,12 @@ const (
 )
 
 const (
-	// TokenUserRole describes a user token.
-	TokenUserRole = "user"
-	// TokenSystemRole describes a system token.
-	TokenSystemRole = "system"
+	// TokenAccessUserRole describes an access user token.
+	TokenAccessUserRole = "user"
+	// TokenRefreshUserRole describes a refresh user token.
+	TokenRefreshUserRole = "user-refresh"
+	// TokenAccessSystemRole describes an access system token.
+	TokenAccessSystemRole = "system"
 )
 
 const (
@@ -59,42 +65,55 @@ const (
 
 // TokenIssuer describes the capability of issuing tokens.
 type TokenIssuer interface {
-	IssueUserToken(sub int64) (string, error)
-	IssueSystemToken() (string, error)
+	IssueAccessUserToken(sub int64) (string, error)
+	IssueRefreshUserToken(sub int64) (string, error)
+	IssueAccessSystemToken() (string, error)
 }
 
 type tokenIssuer struct {
-	keyID      string
-	privateKey []byte
-	issuer     string
-	audience   string
-	lifetime   time.Duration
+	keyID           string
+	privateKey      []byte
+	issuer          string
+	audience        string
+	refreshLifetime time.Duration
+	accessLifetime  time.Duration
 }
 
 // NewTokenIssuer initializes a new default TokenIssuer.
-func NewTokenIssuer(keyID string, privateKey []byte, issuer, audience string, lifetime time.Duration) (TokenIssuer, error) {
+func NewTokenIssuer(keyID string, privateKey []byte, issuer, audience string, refreshLifetime, accessLifetime time.Duration) (TokenIssuer, error) {
 	if err := validateParams(keyID, privateKey, issuer, audience); err != nil {
 		return nil, err
 	}
 	return &tokenIssuer{
-		keyID:      keyID,
-		privateKey: privateKey,
-		issuer:     issuer,
-		audience:   audience,
-		lifetime:   lifetime,
+		keyID:           keyID,
+		privateKey:      privateKey,
+		issuer:          issuer,
+		audience:        audience,
+		refreshLifetime: refreshLifetime,
+		accessLifetime:  accessLifetime,
 	}, nil
 }
 
-func (ti *tokenIssuer) IssueUserToken(sub int64) (string, error) {
-	return ti.issueToken(sub, TokenUserRole)
+func (ti *tokenIssuer) IssueAccessUserToken(sub int64) (string, error) {
+	return ti.issueToken(sub, TokenAccessUserRole)
 }
 
-func (ti *tokenIssuer) IssueSystemToken() (string, error) {
-	return ti.issueToken(defaultSystemUserID, TokenSystemRole)
+func (ti *tokenIssuer) IssueRefreshUserToken(sub int64) (string, error) {
+	return ti.issueToken(sub, TokenRefreshUserRole)
+}
+
+func (ti *tokenIssuer) IssueAccessSystemToken() (string, error) {
+	return ti.issueToken(defaultSystemUserID, TokenAccessSystemRole)
 }
 
 func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
-	if role == TokenUserRole && sub <= 0 {
+	if role != TokenAccessUserRole && role != TokenAccessSystemRole && role != TokenRefreshUserRole {
+		return "", xerror.New(ErrorInvalidRole, sub)
+	}
+	if (role == TokenAccessUserRole || role == TokenRefreshUserRole) && sub <= 0 {
+		return "", xerror.New(ErrorInvalidSubject, sub)
+	}
+	if role == TokenAccessSystemRole && sub != 0 {
 		return "", xerror.New(ErrorInvalidSubject, sub)
 	}
 
@@ -108,7 +127,12 @@ func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
 	t.Claims[issuerHeader] = ti.issuer
 	t.Claims[audienceHeader] = ti.audience
 	t.Claims[issuedAtHeader] = issuedAt.Unix()
-	t.Claims[expirationHeader] = issuedAt.Add(ti.lifetime).Unix()
+
+	if role == TokenRefreshUserRole {
+		t.Claims[expirationHeader] = issuedAt.Add(ti.refreshLifetime).Unix()
+	} else {
+		t.Claims[expirationHeader] = issuedAt.Add(ti.accessLifetime).Unix()
+	}
 
 	s, err := t.SignedString(ti.privateKey)
 	if err != nil {
@@ -167,10 +191,10 @@ func (tv *tokenVerifier) VerifyToken(t string) (int64, string, error) {
 	if err != nil {
 		return 0, "", err
 	}
-	if role != TokenUserRole && role != TokenSystemRole {
+	if role != TokenAccessUserRole && role != TokenAccessSystemRole && role != TokenRefreshUserRole {
 		return 0, "", xerror.New(ErrorInvalidToken, t)
 	}
-	if role == TokenSystemRole && sub != defaultSystemUserID {
+	if role == TokenAccessSystemRole && sub != defaultSystemUserID {
 		return 0, "", xerror.New(ErrorInvalidToken, t)
 	}
 
