@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
+	"github.com/ConnectCorp/go-kit/kit/test"
 )
 
 const (
@@ -59,7 +60,7 @@ func TestToken(t *testing.T) {
 	token, err := ti.IssueAccessUserToken(1)
 	assert.Nil(t, err)
 
-	req := mustTestRequest()
+	req := test.MustNewRequest()
 	req.Header.Set(authorizationHeader, "Bearer "+token)
 
 	tv, err := utils.NewTokenVerifier(keyID, publicKey, issuer, audience)
@@ -67,10 +68,10 @@ func TestToken(t *testing.T) {
 
 	ctx := TokenExtractor(context.Background(), req)
 	assert.Equal(t, "Bearer "+token, ctxToken(ctx))
-	assert.Equal(t, "", ctxToken(TokenExtractor(context.Background(), mustTestRequest())))
+	assert.Equal(t, "", ctxToken(TokenExtractor(context.Background(), test.MustNewRequest())))
 
 	tokenMiddleware := NewTokenMiddleware(tv)
-	tokenFunc := tokenMiddleware(testTerminationMiddleware)
+	tokenFunc := tokenMiddleware(test.TerminationMiddleware)
 	_, err = tokenFunc(ctx, req)
 	assert.Equal(t, "terminated", err.Error())
 	_, err = tokenFunc(ctxWithToken(context.Background(), "bad"), req)
@@ -79,7 +80,7 @@ func TestToken(t *testing.T) {
 	assert.Equal(t, "unauthorized: missing token", err.Error())
 
 	noTokenMiddleware := NewNoTokenMiddleware()
-	noTokenFunc := noTokenMiddleware(testTerminationMiddleware)
+	noTokenFunc := noTokenMiddleware(test.TerminationMiddleware)
 	_, err = noTokenFunc(ctx, req)
 	assert.Equal(t, "bad request: must not authenticate", err.Error())
 	_, err = noTokenFunc(context.Background(), req)

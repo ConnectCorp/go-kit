@@ -1,5 +1,5 @@
-hash: 9f776b3aad831a59d11feeed941ba9e8d918ace1445139348bef936c4637a202
-updated: 2016-06-07T19:08:59.733661466-07:00
+hash: c92e27e119e0027d29a98aa4c2af5c6f69af33017d6ca8a4e32b4919ae3e1305
+updated: 2016-06-20T15:54:12.212972562-07:00
 imports:
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
@@ -30,6 +30,10 @@ imports:
   version: 3b06fc7a4cad73efce5fe6217ab6c33e7231ab4a
   subpackages:
   - proto
+- name: github.com/gorilla/context
+  version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
+- name: github.com/gorilla/mux
+  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
 - name: github.com/kelseyhightower/envconfig
   version: 91921eb4cf999321cdbeebdba5a03555800d493b
 - name: github.com/kr/logfmt
@@ -54,6 +58,8 @@ imports:
   - model
 - name: github.com/prometheus/procfs
   version: abf152e5f3e97f2fafac028d2cc06c1feb87ffa5
+- name: github.com/PuerkitoBio/rehttp
+  version: 0e4cdf8b3b9956274b1b08f0758d429f14d24118
 - name: github.com/stretchr/testify
   version: 8d64eb7173c7753d6419fd4a9caf057398611364
   subpackages:

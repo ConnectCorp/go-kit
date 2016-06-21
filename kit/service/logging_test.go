@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/ConnectCorp/go-kit/kit/utils"
+	"github.com/ConnectCorp/go-kit/kit/test"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
@@ -20,8 +21,8 @@ func TestLogging(t *testing.T) {
 
 	logger := utils.NewFormattedJSONLogger(w)
 	loggingMiddleware := NewLoggingMiddleware(logger)
-	loggingFunc := loggingMiddleware(testTerminationMiddleware)
-	_, err := loggingFunc(ctx, mustTestRequest())
+	loggingFunc := loggingMiddleware(test.TerminationMiddleware)
+	_, err := loggingFunc(ctx, test.MustNewRequest())
 	assert.Equal(t, "terminated", err.Error())
 
 	parsedLogEntry := make(map[string]interface{})

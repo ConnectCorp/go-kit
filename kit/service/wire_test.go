@@ -4,10 +4,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
+	"github.com/ConnectCorp/go-kit/kit/test"
 )
 
 func TestWire(t *testing.T) {
-	req := mustTestRequest()
+	req := test.MustNewRequest()
 	req.Header.Set(clientTypeHeader, "client-type")
 	req.Header.Set(clientVersionHeader, "client-version")
 	ctx := WireExtractor(context.Background(), req)
@@ -15,7 +16,7 @@ func TestWire(t *testing.T) {
 	assert.Equal(t, "client-version", ctxClientVersion(ctx))
 
 	wireMiddleware := NewWireMiddleware()
-	wireFunc := wireMiddleware(testTerminationMiddleware)
+	wireFunc := wireMiddleware(test.TerminationMiddleware)
 
 	_, err := wireFunc(ctx, req)
 	assert.Equal(t, "terminated", err.Error())

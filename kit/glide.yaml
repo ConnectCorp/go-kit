@@ -25,3 +25,6 @@ import:
   subpackages:
   - assert
 - package: github.com/kelseyhightower/envconfig
+- package: github.com/gorilla/mux
+- package: github.com/gorilla/context
+- package: github.com/PuerkitoBio/rehttp
