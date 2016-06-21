@@ -122,9 +122,9 @@ func (r *Router) Mount(route *Route) *Router {
 	endpoint := route.endpoint
 
 	if route.authenticated {
-		endpoint = NewNoTokenMiddleware()(endpoint)
-	} else {
 		endpoint = NewTokenMiddleware(r.tokenVerifier)(endpoint)
+	} else {
+		endpoint = NewNoTokenMiddleware()(endpoint)
 	}
 
 	endpoint = NewWireMiddleware()(route.endpoint)
