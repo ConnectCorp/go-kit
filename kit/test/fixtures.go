@@ -39,42 +39,42 @@ func NewTestServer() *TestServer {
 }
 
 // URL return a URL to the test server with the given path.
-func (cts *TestServer) URL(path string) string {
-	return cts.server.URL + path
+func (ts *TestServer) URL(path string) string {
+	return ts.server.URL + path
 }
 
 // SetValidator sets the validator function used for validating a request.
-func (cts *TestServer) SetValidator(validator func(r *http.Request)) {
-	cts.validator = validator
+func (ts *TestServer) SetValidator(validator func(r *http.Request)) {
+	ts.validator = validator
 }
 
 // SetResponder sets the responder function used for returning a response.
-func (cts *TestServer) SetResponder(responder func(w http.ResponseWriter, r *http.Request)) {
-	cts.responder = responder
+func (ts *TestServer) SetResponder(responder func(w http.ResponseWriter, r *http.Request)) {
+	ts.responder = responder
 }
 
 // ServeHTTP implements the http.Handler interface.
-func (cts *TestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cts.received = true
-	if cts.validator != nil {
-		cts.validator(r)
+func (ts *TestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ts.received = true
+	if ts.validator != nil {
+		ts.validator(r)
 	}
-	if cts.responder != nil {
-		cts.responder(w, r)
+	if ts.responder != nil {
+		ts.responder(w, r)
 	} else {
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
 // AssertReceived asserts that a request has been received and resets the server.
-func (cts *TestServer) AssertReceived(t *testing.T) {
-	assert.True(t, cts.received)
-	cts.received = false
+func (ts *TestServer) AssertReceived(t *testing.T) {
+	assert.True(t, ts.received)
+	ts.received = false
 }
 
 // Close terminates the TestServer.
-func (cts *TestServer) Close() {
-	cts.server.Close()
+func (ts *TestServer) Close() {
+	ts.server.Close()
 }
 
 // GenericMessage is a generic struct that can be used in tests.

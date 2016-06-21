@@ -2,11 +2,18 @@ package service
 
 import (
 	"encoding/json"
+	"github.com/ConnectCorp/go-kit/kit/utils"
+	"github.com/go-kit/kit/endpoint"
+	kitlog "github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/mux"
+	"github.com/tylerb/graceful"
 	"golang.org/x/net/context"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"net/http"
+	"os"
 	"reflect"
+	"time"
 )
 
 const (
@@ -25,8 +32,9 @@ const (
 )
 
 const (
-	defaultContentTypeHeaderName  = "Content-Type"
-	defaultContentTypeHeaderValue = "application/json"
+	defaultContentTypeHeaderName   = "Content-Type"
+	defaultContentTypeHeaderValue  = "application/json"
+	defaultShutdownLameDuckTimeout = 30 * time.Second
 )
 
 // Response is the standard API successful response container Go microservices.
@@ -86,4 +94,98 @@ func ErrorToStatusCode(err error) int {
 		return http.StatusNotFound
 	}
 	return http.StatusInternalServerError
+}
+
+// Router implements a router for Connect microservices.
+type Router struct {
+	prefix          string
+	rootCtx         context.Context
+	metricsReporter MetricsReporter
+	transportLogger kitlog.Logger
+	tokenVerifier   utils.TokenVerifier
+	mux             *mux.Router
+}
+
+// NewRouter initializes a new Router.
+func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier) *Router {
+	return &Router{
+		rootCtx:         context.Background(),
+		metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName),
+		transportLogger: NewTransportLogger(utils.NewFormattedJSONLogger(os.Stderr), "REST"),
+		tokenVerifier:   tokenVerifier,
+		mux:             mux.NewRouter().PathPrefix(prefix).Subrouter(),
+	}
+}
+
+// Mount mounts a Route on the Router.
+func (r *Router) Mount(route *Route) *Router {
+	endpoint := route.endpoint
+
+	if route.authenticated {
+		endpoint = NewNoTokenMiddleware()(endpoint)
+	} else {
+		endpoint = NewTokenMiddleware(r.tokenVerifier)(endpoint)
+	}
+
+	endpoint = NewWireMiddleware()(route.endpoint)
+	endpoint = NewMetricsMiddleware(r.metricsReporter)(endpoint)
+	endpoint = NewLoggingMiddleware(r.transportLogger)(endpoint)
+
+	r.mux.Methods(route.method).Path(route.path).Handler(kithttp.NewServer(
+		r.rootCtx,
+		endpoint,
+		route.decoder,
+		route.encoder,
+		kithttp.ServerBefore(WireExtractor, TokenExtractor, RequestPathExtractor, TraceIDExtractor),
+		kithttp.ServerErrorEncoder(route.errorEncoder),
+		kithttp.ServerAfter(TraceIDSetter)))
+
+	return r
+}
+
+// ListenAndServe exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
+func (r *Router) Run(addr string) {
+	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
+}
+
+// Route describes a route to an endpoint in a router.
+type Route struct {
+	method        string
+	path          string
+	authenticated bool
+	endpoint      endpoint.Endpoint
+	decoder       kithttp.DecodeRequestFunc
+	encoder       kithttp.EncodeResponseFunc
+	errorEncoder  kithttp.ErrorEncoder
+}
+
+// NewRoute initializes a new route.
+func NewRoute(method, path string, endpoint endpoint.Endpoint, decoder kithttp.DecodeRequestFunc) *Route {
+	return &Route{
+		method:        method,
+		path:          path,
+		authenticated: true,
+		endpoint:      endpoint,
+		decoder:       decoder,
+		encoder:       EncodeResponseJSON,
+		errorEncoder:  EncodeErrorJSON,
+	}
+}
+
+// SetNotAuthenticated makes the route reject authentication headers.
+func (r *Route) SetNotAuthenticated() *Route {
+	r.authenticated = false
+	return r
+}
+
+// SetEncoder sets the response encoder for this route.
+func (r *Route) SetEncoder(encoder kithttp.EncodeResponseFunc) *Route {
+	r.encoder = encoder
+	return r
+}
+
+// SetErrorEncoder sets the error response encoder for this route.
+func (r *Route) SetErrorEncoder(errorEncoder kithttp.ErrorEncoder) *Route {
+	r.errorEncoder = errorEncoder
+	return r
 }

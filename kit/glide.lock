@@ -1,5 +1,5 @@
-hash: c92e27e119e0027d29a98aa4c2af5c6f69af33017d6ca8a4e32b4919ae3e1305
-updated: 2016-06-20T15:54:12.212972562-07:00
+hash: 71c5e29c549fe7f90dcdb67f7d07b3d4e816ab556f0754f41cb960d53ebc3bd0
+updated: 2016-06-21T15:56:31.879882287-07:00
 imports:
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
@@ -42,6 +42,10 @@ imports:
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
 - name: github.com/prometheus/client_golang
   version: 488edd04dc224ba64c401747cd0a4b5f05dfb234
   subpackages:
@@ -64,6 +68,8 @@ imports:
   version: 8d64eb7173c7753d6419fd4a9caf057398611364
   subpackages:
   - assert
+- name: github.com/tylerb/graceful
+  version: ecde8c8f16df93a994dda8936c8f60f0c26c28ab
 - name: golang.org/x/net
   version: 154d9f9ea81208afed560f4cf27b4860c8ed1904
   subpackages:

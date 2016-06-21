@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ConnectCorp/go-kit/kit/test"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
@@ -13,22 +14,18 @@ import (
 	"testing"
 )
 
-type testStruct struct {
-	Value string `json:"value"`
-}
-
 func TestMakePOSTRequestDecoder(t *testing.T) {
-	decoder := MakePOSTRequestDecoder(reflect.TypeOf(testStruct{}))
+	decoder := MakePOSTRequestDecoder(reflect.TypeOf(test.GenericMessage{}))
 	req, err := http.NewRequest("POST", "http://url", bytes.NewBufferString(`{ "value": "some-value" }`))
 	assert.Nil(t, err)
 	parsedReq, err := decoder(context.Background(), req)
 	assert.Nil(t, err)
-	assert.Equal(t, &testStruct{"some-value"}, parsedReq)
+	assert.Equal(t, &test.GenericMessage{"some-value"}, parsedReq)
 }
 
 func TestEncodeResponseJSON(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	resp := &testStruct{"some-value"}
+	resp := &test.GenericMessage{"some-value"}
 	assert.Nil(t, EncodeResponseJSON(context.Background(), recorder, resp))
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Equal(t, `{"data":{"value":"some-value"}}`+"\n", recorder.Body.String())

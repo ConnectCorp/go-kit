@@ -18,7 +18,7 @@ const (
 	ErrorClient = "client error"
 )
 
-// InboundRequest is a thin layer on top of an HTTP request.
+// InboundRequest is a thin layer on top of an incoming HTTP request.
 type InboundRequest struct {
 	request    *http.Request
 	cachedBody []byte
@@ -57,7 +57,7 @@ func (ir *InboundRequest) GetCachedBody() []byte {
 	return ir.cachedBody
 }
 
-// InboundResponse is a thing layer on top of an HTTP response.
+// InboundResponse is a thin layer on top of a received HTTP response.
 type InboundResponse struct {
 	response   *http.Response
 	cachedBody []byte

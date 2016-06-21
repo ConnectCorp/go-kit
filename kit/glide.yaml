@@ -28,3 +28,4 @@ import:
 - package: github.com/gorilla/mux
 - package: github.com/gorilla/context
 - package: github.com/PuerkitoBio/rehttp
+- package: github.com/tylerb/graceful
