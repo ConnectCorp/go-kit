@@ -8,7 +8,7 @@ import (
 )
 
 func TestProdHTTPClient(t *testing.T) {
-	ts := test.NewTestServer()
+	ts := test.NewTempServer()
 	defer ts.Close()
 
 	client := MakeProdHTTPClient()

@@ -143,7 +143,7 @@ func (r *Router) Mount(route *Route) *Router {
 	return r
 }
 
-// ListenAndServe exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
+// Run exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
 func (r *Router) Run(addr string) {
 	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
 }

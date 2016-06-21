@@ -23,38 +23,38 @@ func TerminationMiddleware(_ context.Context, _ interface{}) (interface{}, error
 	return nil, xerror.New("terminated")
 }
 
-// TestServer is a test HTTP server that validates incoming requests.
-type TestServer struct {
+// TempServer is a test HTTP server that validates incoming requests.
+type TempServer struct {
 	server    *httptest.Server
 	validator func(r *http.Request)
 	responder func(w http.ResponseWriter, r *http.Request)
 	received  bool
 }
 
-// NewTestServer initialized a new TestServer.
-func NewTestServer() *TestServer {
-	cts := &TestServer{}
+// NewTempServer initialized a new TestServer.
+func NewTempServer() *TempServer {
+	cts := &TempServer{}
 	cts.server = httptest.NewServer(cts)
 	return cts
 }
 
 // URL return a URL to the test server with the given path.
-func (ts *TestServer) URL(path string) string {
+func (ts *TempServer) URL(path string) string {
 	return ts.server.URL + path
 }
 
 // SetValidator sets the validator function used for validating a request.
-func (ts *TestServer) SetValidator(validator func(r *http.Request)) {
+func (ts *TempServer) SetValidator(validator func(r *http.Request)) {
 	ts.validator = validator
 }
 
 // SetResponder sets the responder function used for returning a response.
-func (ts *TestServer) SetResponder(responder func(w http.ResponseWriter, r *http.Request)) {
+func (ts *TempServer) SetResponder(responder func(w http.ResponseWriter, r *http.Request)) {
 	ts.responder = responder
 }
 
 // ServeHTTP implements the http.Handler interface.
-func (ts *TestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (ts *TempServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ts.received = true
 	if ts.validator != nil {
 		ts.validator(r)
@@ -67,13 +67,13 @@ func (ts *TestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // AssertReceived asserts that a request has been received and resets the server.
-func (ts *TestServer) AssertReceived(t *testing.T) {
+func (ts *TempServer) AssertReceived(t *testing.T) {
 	assert.True(t, ts.received)
 	ts.received = false
 }
 
 // Close terminates the TestServer.
-func (ts *TestServer) Close() {
+func (ts *TempServer) Close() {
 	ts.server.Close()
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 func TestInboundRequest(t *testing.T) {
-	ts := test.NewTestServer()
+	ts := test.NewTempServer()
 	defer ts.Close()
 
 	// No body, no body requested.
@@ -59,7 +59,7 @@ func TestInboundRequest(t *testing.T) {
 }
 
 func TestInboundResponse(t *testing.T) {
-	ts := test.NewTestServer()
+	ts := test.NewTempServer()
 	defer ts.Close()
 
 	// Successful, empty body.
