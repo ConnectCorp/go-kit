@@ -117,8 +117,16 @@ func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier) *Route
 	}
 }
 
-// Mount mounts a Route on the Router.
-func (r *Router) Mount(route *Route) *Router {
+// MountService mounts all the routes exported by the service on the Router.
+func (r *Router) MountService(s Service) *Router {
+	for _, route := range s.GetRoutes() {
+		r.MountRoute(route)
+	}
+	return r
+}
+
+// MountRoute mounts a Route on the Router.
+func (r *Router) MountRoute(route *Route) *Router {
 	endpoint := route.endpoint
 
 	if route.authenticated {
@@ -188,4 +196,9 @@ func (r *Route) SetEncoder(encoder kithttp.EncodeResponseFunc) *Route {
 func (r *Route) SetErrorEncoder(errorEncoder kithttp.ErrorEncoder) *Route {
 	r.errorEncoder = errorEncoder
 	return r
+}
+
+// Service allows to declare routes together with a service's implementation.
+type Service interface {
+	GetRoutes() []*Route
 }
