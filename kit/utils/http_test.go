@@ -1,13 +1,13 @@
 package utils
 
 import (
-	"testing"
+	"bytes"
 	"github.com/ConnectCorp/go-kit/kit/test"
-	"net/http"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
-	"bytes"
 	"io/ioutil"
+	"net/http"
+	"testing"
 )
 
 func TestInboundRequest(t *testing.T) {
@@ -15,7 +15,7 @@ func TestInboundRequest(t *testing.T) {
 	defer ts.Close()
 
 	// No body, no body requested.
-	ts.SetValidator(func (r *http.Request) {
+	ts.SetValidator(func(r *http.Request) {
 		ir, err := NewInboundRequest(r, nil)
 		assert.Nil(t, err)
 		assert.Equal(t, "/test1", ir.GetRequest().URL.String())
@@ -26,7 +26,7 @@ func TestInboundRequest(t *testing.T) {
 	ts.AssertReceived(t)
 
 	// No body, body requested.
-	ts.SetValidator(func (r *http.Request) {
+	ts.SetValidator(func(r *http.Request) {
 		_, err := NewInboundRequest(r, &test.GenericMessage{})
 		assert.True(t, xerror.Is(err, ErrorCannotParseJSON))
 	})
@@ -35,7 +35,7 @@ func TestInboundRequest(t *testing.T) {
 	ts.AssertReceived(t)
 
 	// Body, no body requested.
-	ts.SetValidator(func (r *http.Request) {
+	ts.SetValidator(func(r *http.Request) {
 		_, err := NewInboundRequest(r, nil)
 		assert.True(t, xerror.Is(err, ErrorBodyMustBeEmpty))
 	})
@@ -45,7 +45,7 @@ func TestInboundRequest(t *testing.T) {
 
 	// Body, body requested. Also check the body is closed.
 	var request *http.Request
-	ts.SetValidator(func (r *http.Request) {
+	ts.SetValidator(func(r *http.Request) {
 		request = r
 		ir, err := NewInboundRequest(r, &test.GenericMessage{})
 		assert.Nil(t, err)

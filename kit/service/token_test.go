@@ -1,11 +1,11 @@
 package service
 
 import (
+	"github.com/ConnectCorp/go-kit/kit/test"
 	"github.com/ConnectCorp/go-kit/kit/utils"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
-	"github.com/ConnectCorp/go-kit/kit/test"
 )
 
 const (

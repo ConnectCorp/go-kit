@@ -1,10 +1,10 @@
 package service
 
 import (
+	"github.com/ConnectCorp/go-kit/kit/test"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"
-	"github.com/ConnectCorp/go-kit/kit/test"
 )
 
 func TestWire(t *testing.T) {

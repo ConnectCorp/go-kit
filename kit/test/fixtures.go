@@ -1,12 +1,12 @@
 package test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
 
 // MustNewRequest creates a new generic HTTP request for testing.
@@ -25,10 +25,10 @@ func TerminationMiddleware(_ context.Context, _ interface{}) (interface{}, error
 
 // TestServer is a test HTTP server that validates incoming requests.
 type TestServer struct {
-	server *httptest.Server
+	server    *httptest.Server
 	validator func(r *http.Request)
 	responder func(w http.ResponseWriter, r *http.Request)
-	received bool
+	received  bool
 }
 
 // NewTestServer initialized a new TestServer.
@@ -40,7 +40,7 @@ func NewTestServer() *TestServer {
 
 // URL return a URL to the test server with the given path.
 func (cts *TestServer) URL(path string) string {
-	return cts.server.URL+path
+	return cts.server.URL + path
 }
 
 // SetValidator sets the validator function used for validating a request.

@@ -1,11 +1,11 @@
 package service
 
 import (
+	"crypto/tls"
 	"github.com/PuerkitoBio/rehttp"
 	"net"
-	"net/url"
-	"crypto/tls"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -58,4 +58,3 @@ func MakeTestHTTPClient(testProxyURL *url.URL) *http.Client {
 		},
 	}
 }
-

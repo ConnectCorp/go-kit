@@ -3,8 +3,8 @@ package service
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ConnectCorp/go-kit/kit/utils"
 	"github.com/ConnectCorp/go-kit/kit/test"
+	"github.com/ConnectCorp/go-kit/kit/utils"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"

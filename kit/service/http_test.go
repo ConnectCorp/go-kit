@@ -1,10 +1,10 @@
 package service
 
 import (
-	"testing"
 	"github.com/ConnectCorp/go-kit/kit/test"
-	"net/http"
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"testing"
 )
 
 func TestProdHTTPClient(t *testing.T) {
