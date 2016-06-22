@@ -151,6 +151,11 @@ func (r *Router) MountRoute(route *Route) *Router {
 	return r
 }
 
+// GetMux returns the underlying Gorilla *mux.Router, useful for testing or custom configuration.
+func (r *Router) GetMux() *mux.Router {
+	return r.mux
+}
+
 // Run exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
 func (r *Router) Run(addr string) {
 	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
