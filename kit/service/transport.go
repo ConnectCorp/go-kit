@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"github.com/ConnectCorp/go-kit/kit/utils"
-	"github.com/go-kit/kit/endpoint"
 	kitlog "github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
@@ -63,22 +62,6 @@ func MakePOSTRequestDecoder(requestType reflect.Type) kithttp.DecodeRequestFunc 
 	}
 }
 
-// EncodeResponseJSON is a go-kit transport encoder for successful responses.
-func EncodeResponseJSON(ctx context.Context, w http.ResponseWriter, resp interface{}) error {
-	w.Header().Add(defaultContentTypeHeaderName, defaultContentTypeHeaderValue)
-	return json.NewEncoder(w).Encode(&Response{resp})
-}
-
-// EncodeErrorJSON is a go-kit transport encoder for errors.
-func EncodeErrorJSON(_ context.Context, err error, w http.ResponseWriter) {
-	if kitErr, ok := err.(kithttp.Error); ok {
-		err = kitErr.Err
-	}
-	w.Header().Add(defaultContentTypeHeaderName, defaultContentTypeHeaderValue)
-	w.WriteHeader(ErrorToStatusCode(err))
-	_ = json.NewEncoder(w).Encode(&ErrorResponse{Error: err.Error()}) // Ignores an encoding error.
-}
-
 // ErrorToStatusCode converts an error to the corresponding HTTP status code.
 func ErrorToStatusCode(err error) int {
 	if xerror.Is(err, ErrorBadRequest) {
@@ -119,7 +102,7 @@ func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier) *Route
 
 // MountRoute mounts a Route on the Router.
 func (r *Router) MountRoute(route Route) *Router {
-	endpoint := route.GetEndpoint()
+	endpoint := route.Endpoint
 
 	if route.IsAuthenticated() {
 		endpoint = NewTokenMiddleware(r.tokenVerifier)(endpoint)
@@ -134,10 +117,10 @@ func (r *Router) MountRoute(route Route) *Router {
 	r.mux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(kithttp.NewServer(
 		r.rootCtx,
 		endpoint,
-		route.GetDecoder(),
-		route.GetEncoder(),
+		route.Decoder,
+		route.Encoder,
 		kithttp.ServerBefore(WireExtractor, TokenExtractor, RequestPathExtractor, TraceIDExtractor),
-		kithttp.ServerErrorEncoder(route.GetErrorEncoder()),
+		kithttp.ServerErrorEncoder(route.ErrorEncoder),
 		kithttp.ServerAfter(TraceIDSetter)))
 
 	return r
@@ -159,10 +142,10 @@ type Route interface {
 
 	GetMethod() string
 	GetPath() string
-	GetEndpoint() endpoint.Endpoint
-	GetDecoder() kithttp.DecodeRequestFunc
-	GetEncoder() kithttp.EncodeResponseFunc
-	GetErrorEncoder() kithttp.ErrorEncoder
+	Endpoint(ctx context.Context, request interface{}) (response interface{}, err error) // endpoint.Endpoint
+	Decoder(context.Context, *http.Request) (request interface{}, err error)             // kithttp.DecodeRequestFunc
+	Encoder(context.Context, http.ResponseWriter, interface{}) error                     // kithttp.EncodeResponseFunc
+	ErrorEncoder(ctx context.Context, err error, w http.ResponseWriter)                  // kithttp.ErrorEncoder
 }
 
 // Authentication describes whether an endpoint should be authenticated.
@@ -170,17 +153,28 @@ type Authentication interface {
 	IsAuthenticated() bool
 }
 
-// DefaultJSONEncoder is a mixin implementing part of the Route interface, providing default JSON encoding functions.
-type DefaultJSONEncoder struct {
+// EncoderJSON is a mixin implementing part of the Route interface.
+type EncoderJSON struct {
 	// Intentionally empty.
 }
 
-// GetEncoder implements the Route interface.
-func (*DefaultJSONEncoder) GetEncoder() kithttp.EncodeResponseFunc {
-	return EncodeResponseJSON
+// Encoder implements the Route interface.
+func (*EncoderJSON) Encoder(ctx context.Context, w http.ResponseWriter, resp interface{}) error {
+	w.Header().Add(defaultContentTypeHeaderName, defaultContentTypeHeaderValue)
+	return json.NewEncoder(w).Encode(&Response{resp})
 }
 
-// GetErrorEncoder implements the Route interface.
-func (*DefaultJSONEncoder) GetErrorEncoder() kithttp.ErrorEncoder {
-	return EncodeErrorJSON
+// ErrorEncoderJSON is a mixin implementing part of the Route interface.
+type ErrorEncoderJSON struct {
+	// Intentionally empty.
+}
+
+// ErrorEncoder implements the Route interface.
+func (*ErrorEncoderJSON) ErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
+	if kitErr, ok := err.(kithttp.Error); ok {
+		err = kitErr.Err
+	}
+	w.Header().Add(defaultContentTypeHeaderName, defaultContentTypeHeaderValue)
+	w.WriteHeader(ErrorToStatusCode(err))
+	_ = json.NewEncoder(w).Encode(&ErrorResponse{Error: err.Error()}) // Ignores an encoding error.
 }
