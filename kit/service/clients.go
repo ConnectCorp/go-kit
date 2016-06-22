@@ -58,3 +58,11 @@ func MakeTestHTTPClient(testProxyURL *url.URL) *http.Client {
 		},
 	}
 }
+
+// MakeHTTPClientForConfig makes the HTTP client based on the TestProxy config value.
+func MakeHTTPClientForConfig(config *CommonConfig) *http.Client {
+	if config.TestProxy.URL != nil {
+		return MakeTestHTTPClient(config.TestProxy.URL)
+	}
+	return MakeProdHTTPClient()
+}
