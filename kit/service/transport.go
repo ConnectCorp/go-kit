@@ -117,19 +117,11 @@ func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier) *Route
 	}
 }
 
-// MountService mounts all the routes exported by the service on the Router.
-func (r *Router) MountService(s Service) *Router {
-	for _, route := range s.GetRoutes() {
-		r.MountRoute(route)
-	}
-	return r
-}
-
 // MountRoute mounts a Route on the Router.
-func (r *Router) MountRoute(route *Route) *Router {
-	endpoint := route.endpoint
+func (r *Router) MountRoute(route Route) *Router {
+	endpoint := route.GetEndpoint()
 
-	if route.authenticated {
+	if route.IsAuthenticated() {
 		endpoint = NewTokenMiddleware(r.tokenVerifier)(endpoint)
 	} else {
 		endpoint = NewNoTokenMiddleware()(endpoint)
@@ -139,13 +131,13 @@ func (r *Router) MountRoute(route *Route) *Router {
 	endpoint = NewMetricsMiddleware(r.metricsReporter)(endpoint)
 	endpoint = NewLoggingMiddleware(r.transportLogger)(endpoint)
 
-	r.mux.Methods(route.method).Path(route.path).Handler(kithttp.NewServer(
+	r.mux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(kithttp.NewServer(
 		r.rootCtx,
 		endpoint,
-		route.decoder,
-		route.encoder,
+		route.GetDecoder(),
+		route.GetEncoder(),
 		kithttp.ServerBefore(WireExtractor, TokenExtractor, RequestPathExtractor, TraceIDExtractor),
-		kithttp.ServerErrorEncoder(route.errorEncoder),
+		kithttp.ServerErrorEncoder(route.GetErrorEncoder()),
 		kithttp.ServerAfter(TraceIDSetter)))
 
 	return r
@@ -161,49 +153,13 @@ func (r *Router) Run(addr string) {
 	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
 }
 
-// Route describes a route to an endpoint in a router.
-type Route struct {
-	method        string
-	path          string
-	authenticated bool
-	endpoint      endpoint.Endpoint
-	decoder       kithttp.DecodeRequestFunc
-	encoder       kithttp.EncodeResponseFunc
-	errorEncoder  kithttp.ErrorEncoder
-}
-
-// NewRoute initializes a new route.
-func NewRoute(method, path string, endpoint endpoint.Endpoint, decoder kithttp.DecodeRequestFunc) *Route {
-	return &Route{
-		method:        method,
-		path:          path,
-		authenticated: true,
-		endpoint:      endpoint,
-		decoder:       decoder,
-		encoder:       EncodeResponseJSON,
-		errorEncoder:  EncodeErrorJSON,
-	}
-}
-
-// SetNotAuthenticated makes the route reject authentication headers.
-func (r *Route) SetNotAuthenticated() *Route {
-	r.authenticated = false
-	return r
-}
-
-// SetEncoder sets the response encoder for this route.
-func (r *Route) SetEncoder(encoder kithttp.EncodeResponseFunc) *Route {
-	r.encoder = encoder
-	return r
-}
-
-// SetErrorEncoder sets the error response encoder for this route.
-func (r *Route) SetErrorEncoder(errorEncoder kithttp.ErrorEncoder) *Route {
-	r.errorEncoder = errorEncoder
-	return r
-}
-
-// Service allows to declare routes together with a service's implementation.
-type Service interface {
-	GetRoutes() []*Route
+// Route describes a route to an endpoint in a Router.
+type Route interface {
+	GetMethod() string
+	GetPath() string
+	IsAuthenticated() bool
+	GetEndpoint() endpoint.Endpoint
+	GetDecoder() kithttp.DecodeRequestFunc
+	GetEncoder() kithttp.EncodeResponseFunc
+	GetErrorEncoder() kithttp.ErrorEncoder
 }
