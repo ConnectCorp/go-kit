@@ -153,24 +153,50 @@ type Authentication interface {
 	IsAuthenticated() bool
 }
 
-// EncoderJSON is a mixin implementing part of the Route interface.
-type EncoderJSON struct {
+// MethodAndPathMixin is a mixin implementing part of the Route interface.
+type MethodAndPathMixin struct {
+	Method string
+	Path   string
+}
+
+// GetMethod implements the Route interface.
+func (m *MethodAndPathMixin) GetMethod() string {
+	return m.Method
+}
+
+// GetPath implements the Route interface.
+func (m *MethodAndPathMixin) GetPath() string {
+	return m.Path
+}
+
+// AuthenticationMixin is a mixin implementing the Authentication interface.
+type AuthenticationMixin struct {
+	Authenticated bool
+}
+
+// IsAuthenticated implements the Authenticated interface.
+func (a *AuthenticationMixin) IsAuthenticated() bool {
+	return a.Authenticated
+}
+
+// JSONEncoderMixin is a mixin implementing part of the Route interface.
+type JSONEncoderMixin struct {
 	// Intentionally empty.
 }
 
 // Encoder implements the Route interface.
-func (*EncoderJSON) Encoder(ctx context.Context, w http.ResponseWriter, resp interface{}) error {
+func (*JSONEncoderMixin) Encoder(ctx context.Context, w http.ResponseWriter, resp interface{}) error {
 	w.Header().Add(defaultContentTypeHeaderName, defaultContentTypeHeaderValue)
 	return json.NewEncoder(w).Encode(&Response{resp})
 }
 
-// ErrorEncoderJSON is a mixin implementing part of the Route interface.
-type ErrorEncoderJSON struct {
+// JSONErrorEncoderMixin is a mixin implementing part of the Route interface.
+type JSONErrorEncoderMixin struct {
 	// Intentionally empty.
 }
 
 // ErrorEncoder implements the Route interface.
-func (*ErrorEncoderJSON) ErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
+func (*JSONErrorEncoderMixin) ErrorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 	if kitErr, ok := err.(kithttp.Error); ok {
 		err = kitErr.Err
 	}

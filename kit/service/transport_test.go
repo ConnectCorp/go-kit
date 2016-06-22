@@ -23,18 +23,18 @@ func TestMakePOSTRequestDecoder(t *testing.T) {
 	assert.Equal(t, &test.GenericMessage{"some-value"}, parsedReq)
 }
 
-func TestEncoderJSON(t *testing.T) {
+func TestJSONEncoderMixin(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	resp := &test.GenericMessage{"some-value"}
-	assert.Nil(t, (&EncoderJSON{}).Encoder(context.Background(), recorder, resp))
+	assert.Nil(t, (&JSONEncoderMixin{}).Encoder(context.Background(), recorder, resp))
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Equal(t, `{"data":{"value":"some-value"}}`+"\n", recorder.Body.String())
 }
 
-func TestErrorEncoderJSON(t *testing.T) {
+func TestJSONErrorEncoderMixin(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	err := xerror.New(ErrorNotFound)
-	(&ErrorEncoderJSON{}).ErrorEncoder(context.Background(), err, recorder)
+	(&JSONErrorEncoderMixin{}).ErrorEncoder(context.Background(), err, recorder)
 	response := &ErrorResponse{}
 	assert.Nil(t, json.Unmarshal(recorder.Body.Bytes(), response))
 	assert.Equal(t, http.StatusNotFound, recorder.Code)
