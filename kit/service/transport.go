@@ -139,18 +139,23 @@ type Authentication interface {
 
 // MethodAndPathMixin is a mixin implementing part of the Route interface.
 type MethodAndPathMixin struct {
-	Method string
-	Path   string
+	method string
+	path   string
+}
+
+// NewMethodAndPathMixin initializes a new MethodAndPathMixin.
+func NewMethodAndPathMixin(method, path string) MethodAndPathMixin {
+	return MethodAndPathMixin{method: method, path: path}
 }
 
 // GetMethod implements the Route interface.
 func (m *MethodAndPathMixin) GetMethod() string {
-	return m.Method
+	return m.method
 }
 
 // GetPath implements the Route interface.
 func (m *MethodAndPathMixin) GetPath() string {
-	return m.Path
+	return m.path
 }
 
 // AuthenticationMixin is a mixin implementing the Authentication interface.
@@ -191,12 +196,21 @@ func (*JSONErrorEncoderMixin) ErrorEncoder(_ context.Context, err error, w http.
 
 // JSONDecoderMixin is a mixin implementing part of the Route interface.
 type JSONDecoderMixin struct {
-	RequestType reflect.Type
+	requestType reflect.Type
+}
+
+// MustNewJSONDecoderMixin initializes a new JSONDecoderMixin.
+func MustNewJSONDecoderMixin(requestType interface{}) JSONDecoderMixin {
+	t := reflect.TypeOf(requestType)
+	if t.Kind() != reflect.Struct {
+		panic(xerror.New("requestType must have kind = struct.", requestType))
+	}
+	return JSONDecoderMixin{requestType: t}
 }
 
 // Decoder implements the Route interface.
 func (d *JSONDecoderMixin) Decoder(ctx context.Context, r *http.Request) (interface{}, error) {
-	req := reflect.New(d.RequestType).Interface()
+	req := reflect.New(d.requestType).Interface()
 	err := json.NewDecoder(r.Body).Decode(req)
 	defer r.Body.Close()
 	if err != nil {

@@ -10,15 +10,14 @@ import (
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 )
 
-func TestMakePOSTRequestDecoder(t *testing.T) {
-	decoder := MakePOSTRequestDecoder(reflect.TypeOf(test.GenericMessage{}))
+func TestJSONDecoderMixin(t *testing.T) {
+	decoder := MustNewJSONDecoderMixin(test.GenericMessage{})
 	req, err := http.NewRequest("POST", "http://url", bytes.NewBufferString(`{ "value": "some-value" }`))
 	assert.Nil(t, err)
-	parsedReq, err := decoder(context.Background(), req)
+	parsedReq, err := decoder.Decoder(context.Background(), req)
 	assert.Nil(t, err)
 	assert.Equal(t, &test.GenericMessage{"some-value"}, parsedReq)
 }
