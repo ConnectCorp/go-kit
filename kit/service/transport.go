@@ -155,13 +155,19 @@ func (r *Router) Run(addr string) {
 
 // Route describes a route to an endpoint in a Router.
 type Route interface {
+	Authentication
+
 	GetMethod() string
 	GetPath() string
-	IsAuthenticated() bool
 	GetEndpoint() endpoint.Endpoint
 	GetDecoder() kithttp.DecodeRequestFunc
 	GetEncoder() kithttp.EncodeResponseFunc
 	GetErrorEncoder() kithttp.ErrorEncoder
+}
+
+// Authentication describes whether an endpoint should be authenticated.
+type Authentication interface {
+	IsAuthenticated() bool
 }
 
 // DefaultJSONEncoder is a mixin implementing part of the Route interface, providing default JSON encoding functions.
