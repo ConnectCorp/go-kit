@@ -135,7 +135,7 @@ func (r *Router) MountRoute(route *Route) *Router {
 		endpoint = NewNoTokenMiddleware()(endpoint)
 	}
 
-	endpoint = NewWireMiddleware()(route.endpoint)
+	endpoint = NewWireMiddleware()(endpoint)
 	endpoint = NewMetricsMiddleware(r.metricsReporter)(endpoint)
 	endpoint = NewLoggingMiddleware(r.transportLogger)(endpoint)
 
