@@ -160,12 +160,22 @@ func (m *MethodAndPathMixin) GetPath() string {
 
 // AuthenticationMixin is a mixin implementing the Authentication interface.
 type AuthenticationMixin struct {
-	Authenticated bool
+	authenticated bool
+}
+
+// NewRequireAuthenticationMixin initializes a new AuthenticationMixin that requires authentication.
+func NewRequireAuthenticationMixin() AuthenticationMixin {
+	return AuthenticationMixin{authenticated: true}
+}
+
+// NewRejectAuthenticationMixin initializes a new AuthenticationMixin the rejects authentication.
+func NewRejectAuthenticationMixin() AuthenticationMixin {
+	return AuthenticationMixin{authenticated: false}
 }
 
 // IsAuthenticated implements the Authenticated interface.
 func (a *AuthenticationMixin) IsAuthenticated() bool {
-	return a.Authenticated
+	return a.authenticated
 }
 
 // JSONEncoderMixin is a mixin implementing part of the Route interface.
