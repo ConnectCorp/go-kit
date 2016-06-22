@@ -163,3 +163,18 @@ type Route interface {
 	GetEncoder() kithttp.EncodeResponseFunc
 	GetErrorEncoder() kithttp.ErrorEncoder
 }
+
+// DefaultJSONEncoder is a mixin implementing part of the Route interface, providing default JSON encoding functions.
+type DefaultJSONEncoder struct {
+	// Intentionally empty.
+}
+
+// GetEncoder implements the Route interface.
+func (*DefaultJSONEncoder) GetEncoder() kithttp.EncodeResponseFunc {
+	return EncodeResponseJSON
+}
+
+// GetErrorEncoder implements the Route interface.
+func (*DefaultJSONEncoder) GetErrorEncoder() kithttp.ErrorEncoder {
+	return EncodeErrorJSON
+}
