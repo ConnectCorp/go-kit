@@ -1,4 +1,4 @@
-package service
+package server
 
 import (
 	"github.com/ConnectCorp/go-kit/kit/test"

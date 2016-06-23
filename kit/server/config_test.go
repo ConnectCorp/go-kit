@@ -1,4 +1,4 @@
-package service
+package server
 
 import (
 	"github.com/kelseyhightower/envconfig"
@@ -8,10 +8,6 @@ import (
 )
 
 func TestCommonConfig(t *testing.T) {
-	os.Setenv("TEST_JWT_KEY_ID", "test")
-	os.Setenv("TEST_JWT_KEY_PUBLIC", "test")
-	os.Setenv("TEST_JWT_ISSUER", "test")
-	os.Setenv("TEST_JWT_AUDIENCE", "test")
 	os.Setenv("TEST_TEST_PROXY", "test")
 	os.Setenv("TEST_CHILD_VALUE", "test")
 
@@ -22,6 +18,6 @@ func TestCommonConfig(t *testing.T) {
 
 	config := &childConfig{}
 	envconfig.MustProcess("TEST", config)
-	assert.Equal(t, "test", config.CommonConfig.JWTKeyID)
+	assert.Equal(t, "test", config.CommonConfig.TestProxy.URL.String())
 	assert.Equal(t, "test", config.ChildValue)
 }

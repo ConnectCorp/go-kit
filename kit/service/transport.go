@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"github.com/ConnectCorp/go-kit/kit/utils"
+	"github.com/go-kit/kit/endpoint"
 	kitlog "github.com/go-kit/kit/log"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
@@ -26,13 +27,11 @@ const (
 	ErrorNotFound = "not found"
 	// ErrorUnexpected is returned when no more specific error can be isolated.
 	ErrorUnexpected = "unexpected"
-	// ErrorCannotDecode is returned when decoding a request body fails.
-	ErrorCannotDecode = "cannot decode request body"
 )
 
 const (
-	defaultContentTypeHeaderName   = "Content-Type"
-	defaultContentTypeHeaderValue  = "application/json"
+	contentTypeHeaderName          = "Content-Type"
+	jsonContentTypeHeaderValue     = "application/json"
 	defaultShutdownLameDuckTimeout = 30 * time.Second
 )
 
@@ -86,21 +85,13 @@ func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier) *Route
 
 // MountRoute mounts a Route on the Router.
 func (r *Router) MountRoute(route Route) *Router {
-	endpoint := route.Endpoint
-
-	if route.IsAuthenticated() {
-		endpoint = NewTokenMiddleware(r.tokenVerifier)(endpoint)
-	} else {
-		endpoint = NewNoTokenMiddleware()(endpoint)
-	}
-
-	endpoint = NewWireMiddleware()(endpoint)
-	endpoint = NewMetricsMiddleware(r.metricsReporter)(endpoint)
-	endpoint = NewLoggingMiddleware(r.transportLogger)(endpoint)
-
 	r.mux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(kithttp.NewServer(
 		r.rootCtx,
-		endpoint,
+		r.chainMiddlewares(route.Endpoint,
+			r.getTokenMiddleware(route.IsAuthenticated()),
+			NewWireMiddleware(),
+			NewMetricsMiddleware(r.metricsReporter),
+			NewLoggingMiddleware(r.transportLogger)),
 		route.Decoder,
 		route.Encoder,
 		kithttp.ServerBefore(WireExtractor, TokenExtractor, RequestPathExtractor, TraceIDExtractor),
@@ -108,6 +99,20 @@ func (r *Router) MountRoute(route Route) *Router {
 		kithttp.ServerAfter(TraceIDSetter)))
 
 	return r
+}
+
+func (r *Router) getTokenMiddleware(authenticated bool) endpoint.Middleware {
+	if authenticated {
+		return NewTokenMiddleware(r.tokenVerifier)
+	}
+	return NewNoTokenMiddleware()
+}
+
+func (r *Router) chainMiddlewares(endpoint endpoint.Endpoint, middlewares ...endpoint.Middleware) endpoint.Endpoint {
+	for _, middleware := range middlewares {
+		endpoint = middleware(endpoint)
+	}
+	return endpoint
 }
 
 // GetMux returns the underlying Gorilla *mux.Router, useful for testing or custom configuration.
@@ -185,7 +190,7 @@ type JSONEncoderMixin struct {
 
 // Encoder implements the Route interface.
 func (*JSONEncoderMixin) Encoder(ctx context.Context, w http.ResponseWriter, resp interface{}) error {
-	w.Header().Add(defaultContentTypeHeaderName, defaultContentTypeHeaderValue)
+	w.Header().Add(contentTypeHeaderName, jsonContentTypeHeaderValue)
 	return json.NewEncoder(w).Encode(&Response{resp})
 }
 
@@ -199,7 +204,7 @@ func (*JSONErrorEncoderMixin) ErrorEncoder(_ context.Context, err error, w http.
 	if kitErr, ok := err.(kithttp.Error); ok {
 		err = kitErr.Err
 	}
-	w.Header().Add(defaultContentTypeHeaderName, defaultContentTypeHeaderValue)
+	w.Header().Add(contentTypeHeaderName, jsonContentTypeHeaderValue)
 	w.WriteHeader(ErrorToStatusCode(err))
 	_ = json.NewEncoder(w).Encode(&ErrorResponse{Error: err.Error()}) // Ignores an encoding error.
 }
