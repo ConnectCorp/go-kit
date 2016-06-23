@@ -222,7 +222,7 @@ func MustNewJSONDecoderMixin(requestType interface{}) JSONDecoderMixin {
 func (d *JSONDecoderMixin) Decoder(ctx context.Context, r *http.Request) (interface{}, error) {
 	parsedBody := reflect.New(d.requestType).Interface()
 	if _, err := utils.NewInboundRequest(r, parsedBody); err != nil {
-		return nil, err
+		return nil, xerror.Wrap(err, ErrorBadRequest)
 	}
 	return parsedBody, nil
 }
