@@ -1,6 +1,10 @@
-hash: 71c5e29c549fe7f90dcdb67f7d07b3d4e816ab556f0754f41cb960d53ebc3bd0
-updated: 2016-06-21T15:56:31.879882287-07:00
+hash: d22e529995f0053e9ffe9b6def895ffbbf87e1a2338263b06774db4021165861
+updated: 2016-06-23T12:40:20.719307087-07:00
 imports:
+- name: github.com/aws/aws-sdk-go
+  version: 8f2725740345a0561fa09669f5f75f905404ef8b
+  subpackages:
+  - aws
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
   subpackages:
@@ -34,6 +38,10 @@ imports:
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/gorilla/mux
   version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
+- name: github.com/jmoiron/sqlx
+  version: bdae0c3219c3bdb92f3d7c70825018712787c933
+  subpackages:
+  - reflectx
 - name: github.com/kelseyhightower/envconfig
   version: 91921eb4cf999321cdbeebdba5a03555800d493b
 - name: github.com/kr/logfmt
@@ -42,6 +50,8 @@ imports:
   version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
+- name: github.com/njern/gonexmo
+  version: 1a398efc044cc721e8ef88dc67f36989507599db
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -64,6 +74,8 @@ imports:
   version: abf152e5f3e97f2fafac028d2cc06c1feb87ffa5
 - name: github.com/PuerkitoBio/rehttp
   version: 0e4cdf8b3b9956274b1b08f0758d429f14d24118
+- name: github.com/pusher/pusher-http-go
+  version: 2bba5f217f6f0f4f0c0a9bb11b945b206b32bec5
 - name: github.com/stretchr/testify
   version: 8d64eb7173c7753d6419fd4a9caf057398611364
   subpackages:
@@ -75,8 +87,18 @@ imports:
   subpackages:
   - context
   - context/ctxhttp
+  - netutil
+- name: gopkg.in/bsm/ratelimit.v1
+  version: db14e161995a5177acef654cb0dd785e8ee8bc22
 - name: gopkg.in/ibrt/go-xerror.v2
   version: 9d39aa23da7ceafa91c2a10d68e87e515d3049d8
   subpackages:
   - xerror
+- name: gopkg.in/redis.v3
+  version: a905127dc89ca51a241eacf70757a40423ab93d0
+  subpackages:
+  - internal
+  - internal/consistenthash
+  - internal/hashtag
+  - internal/pool
 devImports: []
