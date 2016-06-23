@@ -4,40 +4,36 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ConnectCorp/go-kit/kit/test"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 )
 
-type testStruct struct {
-	Value string `json:"value"`
-}
-
-func TestMakePOSTRequestDecoder(t *testing.T) {
-	decoder := MakePOSTRequestDecoder(reflect.TypeOf(testStruct{}))
+func TestJSONDecoderMixin(t *testing.T) {
+	decoder := MustNewJSONDecoderMixin(test.GenericMessage{})
 	req, err := http.NewRequest("POST", "http://url", bytes.NewBufferString(`{ "value": "some-value" }`))
 	assert.Nil(t, err)
-	parsedReq, err := decoder(context.Background(), req)
+	parsedReq, err := decoder.Decoder(context.Background(), req)
 	assert.Nil(t, err)
-	assert.Equal(t, &testStruct{"some-value"}, parsedReq)
+	assert.Equal(t, &test.GenericMessage{"some-value"}, parsedReq)
 }
 
-func TestEncodeResponseJSON(t *testing.T) {
+func TestJSONEncoderMixin(t *testing.T) {
 	recorder := httptest.NewRecorder()
-	resp := &testStruct{"some-value"}
-	assert.Nil(t, EncodeResponseJSON(context.Background(), recorder, resp))
+	resp := &test.GenericMessage{"some-value"}
+	assert.Nil(t, (&JSONEncoderMixin{}).Encoder(context.Background(), recorder, resp))
 	assert.Equal(t, http.StatusOK, recorder.Code)
 	assert.Equal(t, `{"data":{"value":"some-value"}}`+"\n", recorder.Body.String())
 }
 
-func TestEncodeErrorJSON(t *testing.T) {
+func TestJSONErrorEncoderMixin(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	err := xerror.New(ErrorNotFound)
-	EncodeErrorJSON(context.Background(), err, recorder)
+	(&JSONErrorEncoderMixin{}).ErrorEncoder(context.Background(), err, recorder)
 	response := &ErrorResponse{}
 	assert.Nil(t, json.Unmarshal(recorder.Body.Bytes(), response))
 	assert.Equal(t, http.StatusNotFound, recorder.Code)

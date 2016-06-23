@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	requestDurationLabel = "request_duration_ns"
-	requestCounterLabel  = "request_counter"
-	errorCounterLabel    = "error_counter"
+	commonMetricsNamespace = "connect"
+	requestDurationLabel   = "request_duration_ns"
+	requestCounterLabel    = "request_counter"
+	errorCounterLabel      = "error_counter"
 )
 
 // MetricsReporter is an interface that allows to report standard metrics for a request.
