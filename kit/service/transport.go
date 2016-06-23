@@ -220,11 +220,9 @@ func MustNewJSONDecoderMixin(requestType interface{}) JSONDecoderMixin {
 
 // Decoder implements the Route interface.
 func (d *JSONDecoderMixin) Decoder(ctx context.Context, r *http.Request) (interface{}, error) {
-	req := reflect.New(d.requestType).Interface()
-	err := json.NewDecoder(r.Body).Decode(req)
-	defer r.Body.Close()
-	if err != nil {
-		return nil, xerror.Wrap(xerror.Wrap(err, ErrorCannotDecode, r), ErrorBadRequest)
+	parsedBody := reflect.New(d.requestType).Interface()
+	if _, err := utils.NewInboundRequest(r, parsedBody); err != nil {
+		return nil, err
 	}
-	return req, nil
+	return parsedBody, nil
 }
