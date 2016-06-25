@@ -10,13 +10,7 @@ type testLogEntry struct {
 	Value string `json:"value"`
 }
 
-var expectedLogString = `{
-	"k1": "v1",
-	"k2": {
-		"value": "test-value"
-	}
-}
-`
+var expectedLogString = `{"k1":"v1","k2":{"value":"test-value"}}` + "\n"
 
 func TestLogger(t *testing.T) {
 	w := bytes.NewBufferString("")

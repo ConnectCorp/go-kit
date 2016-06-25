@@ -33,7 +33,7 @@ func (l *FormattedJSONLogger) Log(keyvals ...interface{}) error {
 		m[fmt.Sprintf("%s", keyvals[i])] = v
 	}
 
-	b, err := json.MarshalIndent(m, "", "\t")
+	b, err := json.Marshal(m)
 	if err != nil {
 		// TODO: Write this error to logs.
 		return err
