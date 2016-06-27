@@ -26,7 +26,6 @@ type MetricsReporter interface {
 type metricsReporter struct {
 	namespace             string
 	system                string
-	dogstatsdEmitter      *kitdogstatsd.Emitter
 	requestDurationMetric kitmetrics.TimeHistogram
 	requestCounterMetric  kitmetrics.Counter
 	errorCounterMetric    kitmetrics.Counter
@@ -46,7 +45,6 @@ func NewMetricsReporter(namespace, system string, dogstatsdEmitter *kitdogstatsd
 	return &metricsReporter{
 		namespace:             namespace,
 		system:                system,
-		dogstatsdEmitter:      dogstatsdEmitter,
 		requestDurationMetric: makeRequestDurationMetric(namespace, system, requestDurationLabel, dogstatsdEmitter),
 		requestCounterMetric:  makeRequestCounterMetric(namespace, system, requestCounterLabel, dogstatsdEmitter),
 		errorCounterMetric:    makeErrorCounterMetric(namespace, system, errorCounterLabel, dogstatsdEmitter),
