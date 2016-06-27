@@ -5,6 +5,7 @@ import (
 	"github.com/ConnectCorp/go-kit/kit/utils"
 	"github.com/go-kit/kit/endpoint"
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/metrics/dogstatsd"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
 	"github.com/tylerb/graceful"
@@ -73,10 +74,10 @@ type Router struct {
 }
 
 // NewRouter initializes a new Router.
-func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier) *Router {
+func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier, dogstatsdEmitter *dogstatsd.Emitter) *Router {
 	return &Router{
 		rootCtx:         context.Background(),
-		metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName),
+		metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName, dogstatsdEmitter),
 		transportLogger: NewTransportLogger(utils.NewFormattedJSONLogger(os.Stderr), "REST"),
 		tokenVerifier:   tokenVerifier,
 		mux:             mux.NewRouter().PathPrefix(prefix).Subrouter(),
