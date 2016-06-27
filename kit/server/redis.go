@@ -13,6 +13,8 @@ import (
 const (
 	errorInvalidRedisSpec  = "invalid Redis spec"
 	redisMaxRetries        = 3
+	redisReadTimeout       = 10 * time.Second
+	redisWriteTimeout      = 10 * time.Millisecond
 	redisConnPoolSize      = 25
 	baseRedisInitDelay     = 25 * time.Millisecond
 	maxRedisInitRetryCount = 10
@@ -35,9 +37,11 @@ func mustParseRedisSpec(spec *url.URL) *redis.Options {
 	}
 
 	options := &redis.Options{
-		Addr:       spec.Host,
-		MaxRetries: redisMaxRetries,
-		PoolSize:   redisConnPoolSize,
+		Addr:         spec.Host,
+		MaxRetries:   redisMaxRetries,
+		ReadTimeout:  redisReadTimeout,
+		WriteTimeout: redisWriteTimeout,
+		PoolSize:     redisConnPoolSize,
 	}
 
 	if spec.User != nil {
