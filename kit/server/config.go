@@ -33,3 +33,8 @@ type NexmoConfig struct {
 	NexmoAPIKey    string `envconfig:"NEXMO_API_KEY" required:"true"`
 	NexmoAPISecret string `envconfig:"NEXMO_API_SECRET" required:"true"`
 }
+
+// DogstatsdConfig contains configuration keys for services that use Dogstatsd.
+type DogstatsdConfig struct {
+	DogstatsdSpec string `envconfig:"DOGSTATSD_SPEC" required:"true"`
+}
