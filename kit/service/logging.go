@@ -30,6 +30,11 @@ func NewTransportLogger(rootLogger kitlog.Logger, transport string) kitlog.Logge
 	return kitlog.NewContext(rootLogger).With("transport", transport)
 }
 
+// NewBackgroundLogger attaches the background tag to the root logger.
+func NewBackgroundLogger(rootLogger kitlog.Logger) kitlog.Logger {
+	return kitlog.NewContext(rootLogger).With("background", true)
+}
+
 // NewLoggingMiddleware creates a new standard logging middleware for a Go microservice.
 func NewLoggingMiddleware(logger kitlog.Logger) endpoint.Middleware {
 	return func(next endpoint.Endpoint) endpoint.Endpoint {
