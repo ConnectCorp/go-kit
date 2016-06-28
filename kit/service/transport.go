@@ -12,7 +12,6 @@ import (
 	"golang.org/x/net/context"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"net/http"
-	"os"
 	"reflect"
 	"time"
 )
@@ -74,11 +73,16 @@ type Router struct {
 }
 
 // NewRouter initializes a new Router.
-func NewRouter(svcName, prefix string, tokenVerifier utils.TokenVerifier, dogstatsdEmitter *dogstatsd.Emitter) *Router {
+func NewRouter(
+	svcName, prefix string,
+	rootLogger kitlog.Logger,
+	tokenVerifier utils.TokenVerifier,
+	dogstatsdEmitter *dogstatsd.Emitter) *Router {
+
 	return &Router{
 		rootCtx:         context.Background(),
 		metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName, dogstatsdEmitter),
-		transportLogger: NewTransportLogger(utils.NewFormattedJSONLogger(os.Stderr), "REST"),
+		transportLogger: NewTransportLogger(rootLogger, "REST"),
 		tokenVerifier:   tokenVerifier,
 		mux:             mux.NewRouter().PathPrefix(prefix).Subrouter(),
 	}
