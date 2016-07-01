@@ -10,7 +10,7 @@ import (
 
 // InitAWSSession initializes an AWS session.
 func InitAWSSession(cfg *CommonConfig) *session.Session {
-	return session.New(&aws.Config{HTTPClient: MakeHTTPClientForConfig(cfg)})
+	return session.New(&aws.Config{HTTPClient: MakeHTTPClientForConfig(cfg, nil)})
 }
 
 // InitAWSSES initializes a SES client.

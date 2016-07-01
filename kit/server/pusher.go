@@ -10,6 +10,6 @@ func MustInitPusher(commonCfg *CommonConfig, pusherCfg *PusherConfig) *pusher.Cl
 	if err != nil {
 		panic(err)
 	}
-	pusherClient.HttpClient = MakeHTTPClientForConfig(commonCfg)
+	pusherClient.HttpClient = MakeHTTPClientForConfig(commonCfg, nil)
 	return pusherClient
 }
