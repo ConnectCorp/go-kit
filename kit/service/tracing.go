@@ -23,13 +23,14 @@ func TraceIDExtractor(ctx context.Context, r *http.Request) context.Context {
 
 // TraceIDSetter is a go-kit after handler that sets the context trace ID into a HTTP header.
 func TraceIDSetter(ctx context.Context, w http.ResponseWriter) {
-	w.Header().Set(traceIDHeader, ctxTraceID(ctx))
+	w.Header().Set(traceIDHeader, CtxTraceID(ctx))
 }
 
 func ctxWithTraceID(ctx context.Context, traceID string) context.Context {
 	return context.WithValue(ctx, ctxLabelTraceID, traceID)
 }
 
-func ctxTraceID(ctx context.Context) string {
+//CtxTraceID returns traceId from the context
+func CtxTraceID(ctx context.Context) string {
 	return EnsureString(ctx, ctxLabelTraceID)
 }
