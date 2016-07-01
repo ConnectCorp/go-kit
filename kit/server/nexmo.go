@@ -43,5 +43,5 @@ func nexmoThrottleRetry(attempt rehttp.Attempt) bool {
 		return false
 	}
 
-	return resp.Status == '1'
+	return resp.Status == "1"
 }
