@@ -21,7 +21,17 @@ const (
 )
 
 // MakeProdHTTPClient makes an HTTP client suitable for use in production.
-func MakeProdHTTPClient() *http.Client {
+func MakeProdHTTPClient(retry rehttp.RetryFn) *http.Client {
+	if retry == nil {
+		retry = rehttp.RetryAll(
+			rehttp.RetryMaxRetries(defaultMaxRetries),
+			rehttp.RetryAny(
+				rehttp.RetryTemporaryErr(),
+				rehttp.RetryStatusInterval(500, 600),
+			),
+		)
+	}
+
 	return &http.Client{
 		Transport: rehttp.NewTransport(
 			&http.Transport{
@@ -34,13 +44,7 @@ func MakeProdHTTPClient() *http.Client {
 				ResponseHeaderTimeout: defaultResponseHeaderTimeout,
 				ExpectContinueTimeout: defaultExpectContinueTimeout,
 			},
-			rehttp.RetryAll(
-				rehttp.RetryMaxRetries(defaultMaxRetries),
-				rehttp.RetryAny(
-					rehttp.RetryTemporaryErr(),
-					rehttp.RetryStatusInterval(500, 600),
-				),
-			),
+			retry,
 			rehttp.ExpJitterDelay(defaultBaseExpJitterDelay, defaultMaxExpJitterDelay)),
 	}
 }
@@ -60,9 +64,9 @@ func MakeTestHTTPClient(testProxyURL *url.URL) *http.Client {
 }
 
 // MakeHTTPClientForConfig makes the HTTP client based on the TestProxy config value.
-func MakeHTTPClientForConfig(config *CommonConfig) *http.Client {
+func MakeHTTPClientForConfig(config *CommonConfig, retry rehttp.RetryFn) *http.Client {
 	if config.TestProxy.URL != nil {
 		return MakeTestHTTPClient(config.TestProxy.URL)
 	}
-	return MakeProdHTTPClient()
+	return MakeProdHTTPClient(retry)
 }
