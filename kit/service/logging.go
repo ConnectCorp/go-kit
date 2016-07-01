@@ -52,7 +52,7 @@ func logRequest(logger kitlog.Logger, ctx context.Context, startTime time.Time, 
 		logger.Log(
 			actionKey, ctxRequestPath(ctx),
 			durationKey, durationUs(startTime),
-			ctxLabelTraceID, ctxTraceID(ctx),
+			ctxLabelTraceID, CtxTraceID(ctx),
 			ctxLabelClientType, ctxClientType(ctx),
 			ctxLabelClientVersion, ctxClientVersion(ctx))
 		return
@@ -60,7 +60,7 @@ func logRequest(logger kitlog.Logger, ctx context.Context, startTime time.Time, 
 	logger.Log(
 		actionKey, ctxRequestPath(ctx),
 		durationKey, durationUs(startTime),
-		ctxLabelTraceID, ctxTraceID(ctx),
+		ctxLabelTraceID, CtxTraceID(ctx),
 		ctxLabelClientType, ctxClientType(ctx),
 		ctxLabelClientVersion, ctxClientVersion(ctx),
 		requestKey, strings.Split(spew.Sdump(req), "\n"),
