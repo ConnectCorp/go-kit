@@ -26,8 +26,8 @@ type RedisHealthChecker struct {
 }
 
 // NewRedisHealthChecker initializes a new RedisHealthChecker.
-func NewRedisHealthChecker(redisClient *redis.Client) {
-	&RedisHealthChecker{redisClient: redisClient}
+func NewRedisHealthChecker(redisClient *redis.Client) *RedisHealthChecker {
+	return &RedisHealthChecker{redisClient: redisClient}
 }
 
 // CheckHealth implements the HealthCheck interface.
