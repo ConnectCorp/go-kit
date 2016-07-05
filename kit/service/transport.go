@@ -106,7 +106,7 @@ func NewRouter(
 
 // MountRoute mounts a Route on the Router.
 func (r *Router) MountRoute(route Route) *Router {
-	r.mux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(kithttp.NewServer(
+	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(kithttp.NewServer(
 		r.rootCtx,
 		r.chainMiddlewares(route.Endpoint,
 			r.getTokenMiddleware(route.IsAuthenticated()),
