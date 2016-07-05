@@ -71,6 +71,7 @@ type Router struct {
 	transportLogger kitlog.Logger
 	tokenVerifier   utils.TokenVerifier
 	mux             *mux.Router
+	prefixMux       *mux.Router
 }
 
 // NewRouter initializes a new Router.
@@ -98,7 +99,8 @@ func NewRouter(
 		metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName, dogstatsdEmitter),
 		transportLogger: NewTransportLogger(rootLogger, "REST"),
 		tokenVerifier:   tokenVerifier,
-		mux:             mux.PathPrefix(prefix).Subrouter(),
+		mux:             mux,
+		prefixMux:       mux.PathPrefix(prefix).Subrouter(),
 	}
 }
 
