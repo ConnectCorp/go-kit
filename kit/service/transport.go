@@ -78,14 +78,26 @@ func NewRouter(
 	svcName, prefix string,
 	rootLogger kitlog.Logger,
 	tokenVerifier utils.TokenVerifier,
-	dogstatsdEmitter *dogstatsd.Emitter) *Router {
+	dogstatsdEmitter *dogstatsd.Emitter,
+	healthChecker HealthChecker) *Router {
+
+	mux := mux.NewRouter()
+
+	mux.Methods("GET").Path(healthRoutePath).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := healthChecker.CheckHealth(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 
 	return &Router{
 		rootCtx:         context.Background(),
 		metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName, dogstatsdEmitter),
 		transportLogger: NewTransportLogger(rootLogger, "REST"),
 		tokenVerifier:   tokenVerifier,
-		mux:             mux.NewRouter().PathPrefix(prefix).Subrouter(),
+		mux:             mux.PathPrefix(prefix).Subrouter(),
 	}
 }
 
@@ -105,18 +117,6 @@ func (r *Router) MountRoute(route Route) *Router {
 		kithttp.ServerAfter(TraceIDSetter)))
 
 	return r
-}
-
-// MountHealthChecker mounts a HealthChecker endpoint on the Router.
-func (r *Router) MountHealthChecker(healthChecker HealthChecker) {
-	r.mux.Methods("GET").Path(healthRoutePath).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := healthChecker.CheckHealth(); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	})
 }
 
 func (r *Router) getTokenMiddleware(authenticated bool) endpoint.Middleware {
