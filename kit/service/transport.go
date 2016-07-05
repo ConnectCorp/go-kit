@@ -90,6 +90,7 @@ func NewRouter(
 			return
 		}
 		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
 	})
 
 	return &Router{
