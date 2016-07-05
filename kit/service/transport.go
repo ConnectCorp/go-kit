@@ -33,6 +33,7 @@ const (
 	contentTypeHeaderName          = "Content-Type"
 	jsonContentTypeHeaderValue     = "application/json"
 	defaultShutdownLameDuckTimeout = 30 * time.Second
+	healthRoutePath                = "/health"
 )
 
 // Response is the standard API successful response container Go microservices.
@@ -104,6 +105,18 @@ func (r *Router) MountRoute(route Route) *Router {
 		kithttp.ServerAfter(TraceIDSetter)))
 
 	return r
+}
+
+// MountHealthChecker mounts a HealthChecker endpoint on the Router.
+func (r *Router) MountHealthChecker(healthChecker HealthChecker) {
+	r.mux.Methods("GET").Path(healthRoutePath).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := healthChecker.CheckHealth(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 }
 
 func (r *Router) getTokenMiddleware(authenticated bool) endpoint.Middleware {
