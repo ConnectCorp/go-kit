@@ -101,4 +101,16 @@ imports:
   - internal/consistenthash
   - internal/hashtag
   - internal/pool
+- name: github.com/newrelic/go-agent
+  version: 32a6da2f59d59ace7baeb67451c6695f5524a39d
+  subpackages:
+  - api
+  - internal
+  - api/datastore
+  - api/attributes
+  - internal/jsonx
+  - internal/utilization
+  - log
+  - version
+  - internal/sysinfo
 devImports: []
