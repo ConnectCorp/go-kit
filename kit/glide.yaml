@@ -37,3 +37,4 @@ import:
 - package: github.com/aws/aws-sdk-go
   subpackages:
   - aws
+- package: github.com/newrelic/go-agent

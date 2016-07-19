@@ -73,7 +73,7 @@ type Router struct {
 	tokenVerifier   utils.TokenVerifier
 	mux             *mux.Router
 	prefixMux       *mux.Router
-	newrelicApp     *newrelic.Application
+	newrelicApp     newrelic.Application
 }
 
 // NewRouter initializes a new Router.
@@ -83,7 +83,7 @@ func NewRouter(
 	tokenVerifier utils.TokenVerifier,
 	dogstatsdEmitter *dogstatsd.Emitter,
 	healthChecker HealthChecker,
-	newrelicApp *newrelic.Application,
+	newrelicApp newrelic.Application,
 ) *Router {
 
 	mux := mux.NewRouter()
@@ -111,7 +111,9 @@ func NewRouter(
 
 // MountRoute mounts a Route on the Router.
 func (r *Router) MountRoute(route Route) *Router {
-	handler := kithttp.NewServer(
+	var handler http.Handler
+
+	handler = kithttp.NewServer(
 		r.rootCtx,
 		r.chainMiddlewares(route.Endpoint,
 			r.getTokenMiddleware(route.IsAuthenticated()),
@@ -126,7 +128,7 @@ func (r *Router) MountRoute(route Route) *Router {
 
 	//Optionally report performance metrics to newrelic
 	if r.newrelicApp != nil {
-		handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
+		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
 	}
 
 	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
