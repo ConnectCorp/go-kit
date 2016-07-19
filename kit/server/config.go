@@ -38,3 +38,10 @@ type NexmoConfig struct {
 type DogstatsdConfig struct {
 	DogstatsdSpec string `envconfig:"DOGSTATSD_SPEC" required:"true"`
 }
+
+// NewRelicConfig contains optional configuration keys for newrelic
+type NewRelicConfig struct {
+	NewRelicAppName    string `envconfig:"NEW_RELIC_APP_NAME"`
+	NewRelicLicenseKey string `envconfig:"NEW_RELIC_LICENSE_KEY"`
+	NewRelicBetaToken  string `envconfig:"NEW_RELIC_BETA_TOKEN"`
+}

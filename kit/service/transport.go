@@ -8,6 +8,7 @@ import (
 	"github.com/go-kit/kit/metrics/dogstatsd"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
+	"github.com/newrelic/go-agent"
 	"github.com/tylerb/graceful"
 	"golang.org/x/net/context"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
@@ -72,6 +73,7 @@ type Router struct {
 	tokenVerifier   utils.TokenVerifier
 	mux             *mux.Router
 	prefixMux       *mux.Router
+	newrelicApp     *newrelic.Application
 }
 
 // NewRouter initializes a new Router.
@@ -80,7 +82,9 @@ func NewRouter(
 	rootLogger kitlog.Logger,
 	tokenVerifier utils.TokenVerifier,
 	dogstatsdEmitter *dogstatsd.Emitter,
-	healthChecker HealthChecker) *Router {
+	healthChecker HealthChecker,
+	newrelicApp *newrelic.Application,
+) *Router {
 
 	mux := mux.NewRouter()
 
@@ -101,12 +105,13 @@ func NewRouter(
 		tokenVerifier:   tokenVerifier,
 		mux:             mux,
 		prefixMux:       mux.PathPrefix(prefix).Subrouter(),
+		newrelicApp:     newrelicApp,
 	}
 }
 
 // MountRoute mounts a Route on the Router.
 func (r *Router) MountRoute(route Route) *Router {
-	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(kithttp.NewServer(
+	handler := kithttp.NewServer(
 		r.rootCtx,
 		r.chainMiddlewares(route.Endpoint,
 			r.getTokenMiddleware(route.IsAuthenticated()),
@@ -117,7 +122,14 @@ func (r *Router) MountRoute(route Route) *Router {
 		route.Encoder,
 		kithttp.ServerBefore(WireExtractor, TokenExtractor, RequestPathExtractor, TraceIDExtractor),
 		kithttp.ServerErrorEncoder(route.ErrorEncoder),
-		kithttp.ServerAfter(TraceIDSetter)))
+		kithttp.ServerAfter(TraceIDSetter))
+
+	//Optionally report performance metrics to newrelic
+	if r.newrelicApp != nil {
+		handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
+	}
+
+	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
 
 	return r
 }
