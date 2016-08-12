@@ -2,10 +2,7 @@ package utils
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
-	"fmt"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
-	"io"
 	"math/big"
 )
 
@@ -52,11 +49,4 @@ func GenRandomIntRange(min, max int64) int64 {
 		panic(err)
 	}
 	return r.Int64() + min
-}
-
-// SaltAndHash returns a SHA-256 hash of the salted subject, formatted as hex string.
-func SaltAndHash(subject, salt string) string {
-	h := sha256.New()
-	io.WriteString(h, subject+salt)
-	return fmt.Sprintf("%x", h.Sum(nil))
 }
