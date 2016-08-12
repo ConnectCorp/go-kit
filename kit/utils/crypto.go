@@ -1,12 +1,11 @@
 package utils
 
 import (
-	"crypto/sha256"
 	"crypto/md5"
-	"io"
+	"crypto/sha256"
 	"fmt"
+	"io"
 )
-
 
 // SaltAndHash returns a SHA-256 hash of the salted subject, formatted as hex string.
 func SaltAndHash(subject, salt string) string {

@@ -1,10 +1,10 @@
 package utils
 
 import (
-	"testing"
-	"regexp"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"regexp"
+	"testing"
 )
 
 func TestSaltAndHash(t *testing.T) {
