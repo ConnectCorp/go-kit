@@ -66,9 +66,9 @@ func ErrorToStatusCode(err error) int {
 
 // Router implements a router for Connect microservices.
 type Router struct {
-	prefix          string
-	rootCtx         context.Context
-	metricsReporter MetricsReporter
+	prefix  string
+	rootCtx context.Context
+	//metricsReporter MetricsReporter
 	transportLogger kitlog.Logger
 	tokenVerifier   utils.TokenVerifier
 	mux             *mux.Router
@@ -99,8 +99,8 @@ func NewRouter(
 	})
 
 	return &Router{
-		rootCtx:         context.Background(),
-		metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName, dogstatsdEmitter),
+		rootCtx: context.Background(),
+		//metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName, dogstatsdEmitter),
 		transportLogger: NewTransportLogger(rootLogger, "REST"),
 		tokenVerifier:   tokenVerifier,
 		mux:             mux,
@@ -118,7 +118,7 @@ func (r *Router) MountRoute(route Route) *Router {
 		r.chainMiddlewares(route.Endpoint,
 			r.getTokenMiddleware(route.IsAuthenticated()),
 			NewWireMiddleware(),
-			NewMetricsMiddleware(r.metricsReporter),
+			//NewMetricsMiddleware(r.metricsReporter),
 			NewLoggingMiddleware(r.transportLogger)),
 		route.Decoder,
 		route.Encoder,
