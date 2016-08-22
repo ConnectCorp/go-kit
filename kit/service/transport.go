@@ -7,6 +7,7 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics/dogstatsd"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/newrelic/go-agent"
 	"github.com/tylerb/graceful"
@@ -143,7 +144,7 @@ func (r *Router) MountRoute(route Route) *Router {
 		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
 	}
 
-	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
+	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handlers.CORS()(handler))
 
 	return r
 }

@@ -38,3 +38,4 @@ import:
   subpackages:
   - aws
 - package: github.com/newrelic/go-agent
+- package: github.com/gorilla/handlers
