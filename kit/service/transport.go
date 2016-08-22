@@ -110,7 +110,6 @@ func NewRouter(
 
 	})
 
-
 	return &Router{
 		rootCtx: context.Background(),
 		//metricsReporter: NewMetricsReporter(commonMetricsNamespace, svcName, dogstatsdEmitter),
