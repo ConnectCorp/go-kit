@@ -38,6 +38,12 @@ const (
 	healthRoutePath                = "/health"
 )
 
+var (
+	corsAllowedHeaders = handlers.AllowedHeaders([]string{"X-Requested-With", "X-Connect-Client-Type", "X-Connect-Client-Version", "Origin", "Content-Type"})
+	corsAllowedMethods = handlers.AllowedMethods([]string{"POST", "GET", "HEAD", "PUT", "DELETE"})
+	corsAllowedOrigins = handlers.AllowedOrigins([]string{"*"})
+)
+
 // Response is the standard API successful response container Go microservices.
 type Response struct {
 	Data interface{} `json:"data,omitempty"`
@@ -132,10 +138,7 @@ func (r *Router) MountRoute(route Route) *Router {
 		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
 	}
 
-	headers := handlers.AllowedHeaders([]string{"X-Connect-Client-Type", "X-Connect-Client-Version", "Origin", "Content-Type"})
-	methods := handlers.AllowedMethods([]string{"POST", "GET", "HEAD", "PUT", "DELETE"})
-	origins := handlers.AllowedOrigins([]string{"*"})
-	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handlers.CORS(headers, methods, origins)(handler))
+	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
 
 	return r
 }
@@ -159,9 +162,22 @@ func (r *Router) GetMux() *mux.Router {
 	return r.mux
 }
 
+func corsMiddleware(handler http.Handler) http.Handler {
+
+	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			handler.ServeHTTP(w, r)
+		}
+	})
+
+	return handlers.CORS(corsAllowedHeaders, corsAllowedMethods, corsAllowedOrigins)(wrapper)
+}
+
 // Run exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
 func (r *Router) Run(addr string) {
-	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
+	graceful.Run(addr, defaultShutdownLameDuckTimeout, corsMiddleware(r.mux))
 }
 
 // Route describes a route to an endpoint in a Router.
