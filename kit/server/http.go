@@ -69,7 +69,7 @@ func MakeHTTPClientForConfig(config *CommonConfig, retry rehttp.RetryFn) *http.C
 	return MakeHTTPClientForConfigValue(config.TestProxy.URL, retry)
 }
 
-// MakeHTTPClientForConfig makes a test HTTP client if testURL is not nil, a prod HTTP client if it is nil.
+// MakeHTTPClientForConfigValue makes a test HTTP client if testURL is not nil, a prod HTTP client if it is nil.
 func MakeHTTPClientForConfigValue(testURL *url.URL, retry rehttp.RetryFn) *http.Client {
 	if testURL != nil {
 		return MakeTestHTTPClient(testURL)
