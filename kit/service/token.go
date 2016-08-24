@@ -64,6 +64,7 @@ type AuthVerifier interface {
 	AcceptAnyAccessUserToken() AuthVerifier
 	AcceptAccessUserTokenForSubs(subs ...int64) AuthVerifier
 	Verify() error
+	VerifyAndGet() (string, int64, error)
 }
 
 type contextAuthVerifier struct {
@@ -101,27 +102,33 @@ func (av *contextAuthVerifier) AcceptAccessUserTokenForSubs(subs ...int64) AuthV
 	return av
 }
 
-// Verify implements the AuthVerifier interface.
-func (av *contextAuthVerifier) Verify() error {
+// VerifyAndGet implements the AuthVerifier interface.
+func (av *contextAuthVerifier) VerifyAndGet() (string, int64, error) {
 	authorizedRole := ctxAuthorizedRole(av.ctx)
 	authorizedSub := ctxAuthorizedSub(av.ctx)
 
 	if authorizedRole == utils.TokenAccessSystemRole && av.acceptAccessSystemToken {
-		return nil
+		return authorizedRole, authorizedSub, nil
 	}
 
 	if authorizedRole == utils.TokenAccessUserRole {
 		if av.acceptAnyAccessUserToken {
-			return nil
+			return authorizedRole, authorizedSub, nil
 		}
 		for _, sub := range av.acceptAccessUserTokenForSubs {
 			if sub == authorizedSub {
-				return nil
+				return authorizedRole, authorizedSub, nil
 			}
 		}
 	}
 
-	return xerror.New(ErrorForbidden, av)
+	return "", 0, xerror.New(ErrorForbidden, av)
+}
+
+// Verify implements the AuthVerifier interface.
+func (av *contextAuthVerifier) Verify() error {
+	_, _, err := av.VerifyAndGet()
+	return err
 }
 
 // NewTokenMiddleware requires a valid token for the request, attaches verified role and sub in the context.

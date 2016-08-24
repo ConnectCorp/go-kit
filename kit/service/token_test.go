@@ -97,6 +97,16 @@ func TestAuthVerifier(t *testing.T) {
 	assert.NotNil(t, NewContextAuthVerifier(systemTokenCtx).Verify())
 	assert.NotNil(t, NewContextAuthVerifier(userTokenCtx1).Verify())
 
+	role, sub, err := NewContextAuthVerifier(systemTokenCtx).AcceptAccessSystemToken().VerifyAndGet()
+	assert.Equal(t, utils.TokenAccessSystemRole, role)
+	assert.EqualValues(t, 0, sub)
+	assert.Nil(t, err)
+
+	role, sub, err = NewContextAuthVerifier(userTokenCtx1).AcceptAnyAccessUserToken().VerifyAndGet()
+	assert.Equal(t, utils.TokenAccessUserRole, role)
+	assert.EqualValues(t, 1, sub)
+	assert.Nil(t, err)
+
 	assert.Nil(t, NewContextAuthVerifier(systemTokenCtx).AcceptAccessSystemToken().Verify())
 	assert.NotNil(t, NewContextAuthVerifier(userTokenCtx1).AcceptAccessSystemToken().Verify())
 
