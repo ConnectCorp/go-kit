@@ -63,15 +63,47 @@ func MakeTestHTTPClient(testProxyURL *url.URL) *http.Client {
 	}
 }
 
-// MakeHTTPClientForConfig makes the HTTP client based on the TestProxy config value.
-func MakeHTTPClientForConfig(config *CommonConfig, retry rehttp.RetryFn) *http.Client {
-	return MakeHTTPClientForConfigValue(config.TestProxy.URL, retry)
+// mockTransport is an HTTP transport that redirects all requests to the given URL without using a proxy.
+type mockTransport struct {
+	mockServerURL *url.URL
+	*http.Transport
 }
 
-// MakeHTTPClientForConfigValue makes a test HTTP client if testURL is not nil, a prod HTTP client if it is nil.
-func MakeHTTPClientForConfigValue(testURL *url.URL, retry rehttp.RetryFn) *http.Client {
-	if testURL != nil {
-		return MakeTestHTTPClient(testURL)
+// RountTrip implements the RoundTripper interface.
+func (m *mockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.URL.Scheme = m.mockServerURL.Scheme
+	req.URL.Host = m.mockServerURL.Host
+	return m.Transport.RoundTrip(req)
+}
+
+// MakeMockServerHTTPClient makes an HTTP client that redirects all requests to the given MockServer URL.
+func MakeMockServerHTTPClient(mockServerURL *url.URL) *http.Client {
+	return &http.Client{
+		Transport: &mockTransport{
+			mockServerURL: mockServerURL,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					// This is needed because the mock service is indeed a MITM attack.
+					// Since this is enabled only for testing, we are cool with it.
+					InsecureSkipVerify: true,
+				},
+			},
+		},
+	}
+}
+
+// MakeHTTPClientForConfig makes the HTTP client based on the TestProxy config value.
+func MakeHTTPClientForConfig(config *CommonConfig, retry rehttp.RetryFn) *http.Client {
+	if config.TestProxy.URL != nil {
+		return MakeTestHTTPClient(config.TestProxy.URL)
+	}
+	return MakeProdHTTPClient(retry)
+}
+
+// MakeHTTPClientForConfigUsingMockServer makes the HTTP client based on the TestMock config value.
+func MakeHTTPClientForConfigUsingMockServer(config *CommonConfig, retry rehttp.RetryFn) *http.Client {
+	if config.TestMock.URL != nil {
+		return MakeMockServerHTTPClient(config.TestMock.URL)
 	}
 	return MakeProdHTTPClient(retry)
 }
