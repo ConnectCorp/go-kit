@@ -7,6 +7,7 @@ import (
 // CommonConfig contains common configuration keys for Connect microservices.
 type CommonConfig struct {
 	TestProxy utils.EnvURL `envconfig:"TEST_PROXY"`
+	TestMock utils.EnvURL `envconfig:"TEST_MOCK"`
 }
 
 // TokenVerifierConfig contains configuration keys for services that verify tokens.
