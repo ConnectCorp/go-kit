@@ -169,6 +169,11 @@ func (r *Router) GetMux() *mux.Router {
 	return r.mux
 }
 
+// GetPrefixMux returns the underlying prefixed Gorilla *mux.Router, useful for testing or custom configuration.
+func (r *Router) GetPrefixMux() *mux.Router {
+	return r.prefixMux
+}
+
 func corsMiddleware(handler http.Handler) http.Handler {
 
 	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
