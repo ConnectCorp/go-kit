@@ -39,7 +39,14 @@ const (
 )
 
 var (
-	corsAllowedHeaders = handlers.AllowedHeaders([]string{"X-Requested-With", "X-Connect-Client-Type", "X-Connect-Client-Version", "Origin", "Content-Type"})
+	corsAllowedHeaders = handlers.AllowedHeaders([]string{
+		"X-Requested-With",
+		"X-Connect-Client-Type",
+		"X-Connect-Client-Version",
+		"Origin",
+		"Content-Type",
+		"Authorization",
+	})
 	corsAllowedMethods = handlers.AllowedMethods([]string{"POST", "GET", "HEAD", "PUT", "DELETE"})
 	corsAllowedOrigins = handlers.AllowedOrigins([]string{"*"})
 )
