@@ -3,7 +3,6 @@ package server
 import (
 	"crypto/tls"
 	"github.com/PuerkitoBio/rehttp"
-	"github.com/prometheus/common/config"
 	"net"
 	"net/http"
 	"net/url"
