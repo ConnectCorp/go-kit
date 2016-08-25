@@ -289,7 +289,7 @@ func (tv *tokenVerifier) VerifySinglePurposeToken(t string, descriptor SinglePur
 	}
 
 	customClaims := make(map[string]interface{}, len(descriptor.GetAllowedCustomClaims()))
-	for cN, _ := range descriptor.GetAllowedCustomClaims() {
+	for cN := range descriptor.GetAllowedCustomClaims() {
 		if cV, ok := dt.Claims[cN]; ok {
 			customClaims[cN] = cV
 		}
@@ -422,7 +422,7 @@ func safeGetJSONNumberClaimAsInt64(t *jwt.Token, claimName string) (int64, error
 
 func validateCustomClaims(allowedCustomClaims map[string]reflect.Type, customClaims map[string]interface{}) error {
 	remainingCustomClaims := make(map[string]bool, len(allowedCustomClaims))
-	for acN, _ := range allowedCustomClaims {
+	for acN := range allowedCustomClaims {
 		remainingCustomClaims[acN] = true
 	}
 
