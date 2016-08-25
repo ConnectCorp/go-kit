@@ -147,7 +147,7 @@ func (r *Router) MountRoute(route Route) *Router {
 }
 
 func (r *Router) getEndpointWithMiddlewares(route Route) endpoint.Endpoint {
-	middlewares := make([]endpoint.Middleware, 0)
+	middlewares := make([]endpoint.Middleware, 0, 10)
 
 	if route.IsAuthenticated() {
 		middlewares = append(middlewares, NewTokenMiddleware(r.tokenVerifier))
