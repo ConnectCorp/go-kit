@@ -41,9 +41,10 @@ func TestJSONErrorEncoderMixin(t *testing.T) {
 }
 
 func TestAdvancedRouteMixin(t *testing.T) {
-	_ = AdvancedRoute(NewAdvancedRouteMixin(true))
-	assert.True(t, NewAdvancedRouteMixin(true).EnableWireMiddleware())
-	assert.False(t, NewAdvancedRouteMixin(false).EnableWireMiddleware())
+	mixin := NewAdvancedRouteMixin(true)
+	assert.True(t, (&mixin).EnableWireMiddleware())
+	mixin = NewAdvancedRouteMixin(false)
+	assert.False(t, (&mixin).EnableWireMiddleware())
 }
 
 func TestErrorToStatusCode(t *testing.T) {

@@ -315,13 +315,13 @@ type AdvancedRouteMixin struct {
 }
 
 // NewAdvancedRouteMixin initializes a ned AdvancedRouteMixin.
-func NewAdvancedRouteMixin(enableWireMiddleware bool) *AdvancedRouteMixin {
-	return &AdvancedRouteMixin{
+func NewAdvancedRouteMixin(enableWireMiddleware bool) AdvancedRouteMixin {
+	return AdvancedRouteMixin{
 		enableWireMiddleware: enableWireMiddleware,
 	}
 }
 
-// EnableWireMiddleware implements the AdvancedRoute mixin.
+// EnableWireMiddleware implements the AdvancedRoute interface.
 func (a *AdvancedRouteMixin) EnableWireMiddleware() bool {
 	return a.enableWireMiddleware
 }
