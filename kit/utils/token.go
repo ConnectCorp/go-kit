@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,6 +17,8 @@ const (
 	DefaultAccessTokenLifetime = time.Hour * 24
 	// DefaultRefreshTokenLifetime is the default lifetime for a refresh token.
 	DefaultRefreshTokenLifetime = time.Hour * 24 * 365
+	// DefaultSinglePurposeTokenLifetime is the default lifetime for a single purpose token.
+	DefaultSinglePurposeTokenLifetime = time.Hour
 )
 
 const (
@@ -39,6 +42,10 @@ const (
 	ErrorInvalidTokenHeader = "invalid token header"
 	// ErrorExpiredToken is returned when validation fails due to an expired token.
 	ErrorExpiredToken = "expired token"
+	// ErrorInvalidCustomClaim is returned when an invalid custom claim is provided.
+	ErrorInvalidCustomClaim = "invalid custom claim: %v"
+	// ErrorMissingCustomClaims is returned when some custom claims are missing.
+	ErrorMissingCustomClaims = "missing custom claims: %v"
 )
 
 const (
@@ -63,11 +70,57 @@ const (
 	issuedAtHeader      = "iat"
 )
 
+// SinglePurposeTokenDescriptor describes the settings for issuing and verifying a single purpose token.
+type SinglePurposeTokenDescriptor interface {
+	GetRole() string
+	IsSubMeaningful() bool
+	GetLifetime() time.Duration
+	GetAllowedCustomClaims() map[string]reflect.Type
+}
+
+type singlePurposeTokenDescriptor struct {
+	role                string
+	isSubMeaningful     bool
+	lifetime            time.Duration
+	allowedCustomClaims map[string]reflect.Type
+}
+
+// NewSinglePurposeTokenDescriptor initializes a new SinglePurposeTokenDescriptor.
+func NewSinglePurposeTokenDescriptor(role string, isSubMeaningful bool, lifetime time.Duration, allowedCustomClaims map[string]reflect.Type) SinglePurposeTokenDescriptor {
+	return &singlePurposeTokenDescriptor{
+		role:                role,
+		isSubMeaningful:     isSubMeaningful,
+		lifetime:            lifetime,
+		allowedCustomClaims: allowedCustomClaims,
+	}
+}
+
+// GetRole implements the SinglePurposeTokenDescriptor interface.
+func (s *singlePurposeTokenDescriptor) GetRole() string {
+	return s.role
+}
+
+// IsSubMeaningful implements the SinglePurposeTokenDescriptor interface.
+func (s *singlePurposeTokenDescriptor) IsSubMeaningful() bool {
+	return s.isSubMeaningful
+}
+
+// GetLifetime implements the SinglePurposeTokenDescriptor interface.
+func (s *singlePurposeTokenDescriptor) GetLifetime() time.Duration {
+	return s.lifetime
+}
+
+// GetCustomClaims implements the SinglePurposeTokenDescriptor interface.
+func (s *singlePurposeTokenDescriptor) GetAllowedCustomClaims() map[string]reflect.Type {
+	return s.allowedCustomClaims
+}
+
 // TokenIssuer describes the capability of issuing tokens.
 type TokenIssuer interface {
 	IssueAccessUserToken(sub int64) (string, error)
 	IssueRefreshUserToken(sub int64) (string, error)
 	IssueAccessSystemToken() (string, error)
+	IssueSinglePurposeToken(descriptor SinglePurposeTokenDescriptor, sub int64, customClaims map[string]interface{}) (string, error)
 }
 
 type tokenIssuer struct {
@@ -95,18 +148,32 @@ func NewTokenIssuer(keyID string, privateKey []byte, issuer, audience string, re
 }
 
 func (ti *tokenIssuer) IssueAccessUserToken(sub int64) (string, error) {
-	return ti.issueToken(sub, TokenAccessUserRole)
+	return ti.issueAuthenticationToken(sub, TokenAccessUserRole)
 }
 
 func (ti *tokenIssuer) IssueRefreshUserToken(sub int64) (string, error) {
-	return ti.issueToken(sub, TokenRefreshUserRole)
+	return ti.issueAuthenticationToken(sub, TokenRefreshUserRole)
 }
 
 func (ti *tokenIssuer) IssueAccessSystemToken() (string, error) {
-	return ti.issueToken(defaultSystemUserID, TokenAccessSystemRole)
+	return ti.issueAuthenticationToken(defaultSystemUserID, TokenAccessSystemRole)
 }
 
-func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
+func (ti *tokenIssuer) IssueSinglePurposeToken(descriptor SinglePurposeTokenDescriptor, sub int64, customClaims map[string]interface{}) (string, error) {
+	if descriptor.IsSubMeaningful() && sub <= 0 {
+		return "", xerror.New(ErrorInvalidSubject, sub)
+	}
+	if !descriptor.IsSubMeaningful() && sub != 0 {
+		return "", xerror.New(ErrorInvalidSubject, sub)
+	}
+	if err := validateCustomClaims(descriptor.GetAllowedCustomClaims(), customClaims); err != nil {
+		return "", err
+	}
+
+	return ti.issueLowLevelToken(sub, descriptor.GetRole(), descriptor.GetLifetime(), customClaims)
+}
+
+func (ti *tokenIssuer) issueAuthenticationToken(sub int64, role string) (string, error) {
 	if role != TokenAccessUserRole && role != TokenAccessSystemRole && role != TokenRefreshUserRole {
 		return "", xerror.New(ErrorInvalidRole, sub)
 	}
@@ -117,6 +184,18 @@ func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
 		return "", xerror.New(ErrorInvalidSubject, sub)
 	}
 
+	var lifetime time.Duration
+
+	if role == TokenRefreshUserRole {
+		lifetime = ti.refreshLifetime
+	} else {
+		lifetime = ti.accessLifetime
+	}
+
+	return ti.issueLowLevelToken(sub, role, lifetime, map[string]interface{}{})
+}
+
+func (ti *tokenIssuer) issueLowLevelToken(sub int64, role string, lifetime time.Duration, customClaims map[string]interface{}) (string, error) {
 	issuedAt := time.Now()
 	t := jwt.New(jwt.SigningMethodRS256)
 
@@ -127,11 +206,10 @@ func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
 	t.Claims[issuerHeader] = ti.issuer
 	t.Claims[audienceHeader] = ti.audience
 	t.Claims[issuedAtHeader] = issuedAt.Unix()
+	t.Claims[expirationHeader] = issuedAt.Add(lifetime).Unix()
 
-	if role == TokenRefreshUserRole {
-		t.Claims[expirationHeader] = issuedAt.Add(ti.refreshLifetime).Unix()
-	} else {
-		t.Claims[expirationHeader] = issuedAt.Add(ti.accessLifetime).Unix()
+	for claim, value := range customClaims {
+		t.Claims[claim] = value
 	}
 
 	s, err := t.SignedString(ti.privateKey)
@@ -144,6 +222,7 @@ func (ti *tokenIssuer) issueToken(sub int64, role string) (string, error) {
 // TokenVerifier describes the capability of verifying tokens.
 type TokenVerifier interface {
 	VerifyToken(t string) (int64, string, error)
+	VerifySinglePurposeToken(t string, descriptor SinglePurposeTokenDescriptor) (int64, map[string]interface{}, error)
 }
 
 type tokenVerifier struct {
@@ -169,28 +248,11 @@ func NewTokenVerifier(keyID string, publicKey []byte, issuer, audience string) (
 }
 
 func (tv *tokenVerifier) VerifyToken(t string) (int64, string, error) {
-	dt, err := tv.jwtParser.Parse(t, tv.keyCallback)
-	if err != nil {
-		return 0, "", xerror.Wrap(err, ErrorInvalidToken, t)
-	}
-
-	v, err := safeGetStringClaim(dt, tokenVersionHeader)
-	if err != nil {
-		return 0, "", err
-	}
-	if v != currentTokenVersion {
-		return 0, "", xerror.New(ErrorInvalidToken, t)
-	}
-
-	sub, err := safeGetStringClaimAsInt64(dt, subjectHeader)
+	dt, sub, role, err := tv.preVerify(t)
 	if err != nil {
 		return 0, "", err
 	}
 
-	role, err := safeGetStringClaim(dt, roleHeader)
-	if err != nil {
-		return 0, "", err
-	}
 	if role != TokenAccessUserRole && role != TokenAccessSystemRole && role != TokenRefreshUserRole {
 		return 0, "", xerror.New(ErrorInvalidToken, t)
 	}
@@ -198,31 +260,104 @@ func (tv *tokenVerifier) VerifyToken(t string) (int64, string, error) {
 		return 0, "", xerror.New(ErrorInvalidToken, t)
 	}
 
-	iss, err := safeGetStringClaim(dt, issuerHeader)
-	if err != nil {
+	if err := tv.postVerify(dt, t); err != nil {
 		return 0, "", err
 	}
+
+	return sub, role, nil
+}
+
+func (tv *tokenVerifier) VerifySinglePurposeToken(t string, descriptor SinglePurposeTokenDescriptor) (int64, map[string]interface{}, error) {
+	dt, sub, role, err := tv.preVerify(t)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	if err := tv.postVerify(dt, t); err != nil {
+		return 0, nil, err
+	}
+
+	if role != descriptor.GetRole() {
+		return 0, nil, xerror.New(ErrorInvalidToken, t)
+	}
+
+	if descriptor.IsSubMeaningful() && sub <= 0 {
+		return 0, nil, xerror.New(ErrorInvalidToken, t)
+	}
+	if !descriptor.IsSubMeaningful() && sub != 0 {
+		return 0, nil, xerror.New(ErrorInvalidToken, t)
+	}
+
+	customClaims := make(map[string]interface{}, len(descriptor.GetAllowedCustomClaims()))
+	for cN := range descriptor.GetAllowedCustomClaims() {
+		if cV, ok := dt.Claims[cN]; ok {
+			customClaims[cN] = cV
+		}
+	}
+	if err := validateCustomClaims(descriptor.GetAllowedCustomClaims(), customClaims); err != nil {
+		return 0, nil, xerror.Wrap(err, ErrorInvalidToken, t)
+	}
+
+	if err := tv.postVerify(dt, t); err != nil {
+		return 0, nil, err
+	}
+
+	return sub, customClaims, nil
+}
+
+func (tv *tokenVerifier) preVerify(t string) (*jwt.Token, int64, string, error) {
+	dt, err := tv.jwtParser.Parse(t, tv.keyCallback)
+	if err != nil {
+		return nil, 0, "", xerror.Wrap(err, ErrorInvalidToken, t)
+	}
+
+	v, err := safeGetStringClaim(dt, tokenVersionHeader)
+	if err != nil {
+		return nil, 0, "", err
+	}
+	if v != currentTokenVersion {
+		return nil, 0, "", xerror.New(ErrorInvalidToken, t)
+	}
+
+	sub, err := safeGetStringClaimAsInt64(dt, subjectHeader)
+	if err != nil {
+		return nil, 0, "", err
+	}
+
+	role, err := safeGetStringClaim(dt, roleHeader)
+	if err != nil {
+		return nil, 0, "", err
+	}
+
+	return dt, sub, role, nil
+}
+
+func (tv *tokenVerifier) postVerify(dt *jwt.Token, t string) error {
+	iss, err := safeGetStringClaim(dt, issuerHeader)
+	if err != nil {
+		return err
+	}
 	if iss != tv.issuer {
-		return 0, "", xerror.New(ErrorInvalidToken, t)
+		return xerror.New(ErrorInvalidToken, t)
 	}
 
 	aud, err := safeGetStringClaim(dt, audienceHeader)
 	if err != nil {
-		return 0, "", err
+		return err
 	}
 	if aud != tv.audience {
-		return 0, "", xerror.New(ErrorInvalidToken, t)
+		return xerror.New(ErrorInvalidToken, t)
 	}
 
 	exp, err := safeGetJSONNumberClaimAsInt64(dt, expirationHeader)
 	if err != nil {
-		return 0, "", err
+		return err
 	}
 	if exp < time.Now().Unix() {
-		return 0, "", xerror.New(ErrorExpiredToken, t)
+		return xerror.New(ErrorExpiredToken, t)
 	}
 
-	return sub, role, nil
+	return nil
 }
 
 func (tv *tokenVerifier) keyCallback(token *jwt.Token) (interface{}, error) {
@@ -283,4 +418,24 @@ func safeGetJSONNumberClaimAsInt64(t *jwt.Token, claimName string) (int64, error
 		return 0, xerror.New(ErrorInvalidToken, t)
 	}
 	return 0, xerror.New(ErrorInvalidToken, t)
+}
+
+func validateCustomClaims(allowedCustomClaims map[string]reflect.Type, customClaims map[string]interface{}) error {
+	remainingCustomClaims := make(map[string]bool, len(allowedCustomClaims))
+	for acN := range allowedCustomClaims {
+		remainingCustomClaims[acN] = true
+	}
+
+	for cN, cV := range customClaims {
+		if acT, ok := allowedCustomClaims[cN]; !ok || acT != reflect.TypeOf(cV) {
+			return xerror.New(ErrorInvalidCustomClaim, cN)
+		}
+		delete(remainingCustomClaims, cN)
+	}
+
+	if len(remainingCustomClaims) != 0 {
+		return xerror.New(ErrorMissingCustomClaims, remainingCustomClaims)
+	}
+
+	return nil
 }
