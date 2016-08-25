@@ -40,6 +40,12 @@ func TestJSONErrorEncoderMixin(t *testing.T) {
 	assert.Equal(t, &ErrorResponse{Error: err.Error()}, response)
 }
 
+func TestAdvancedRouteMixin(t *testing.T) {
+	_ = AdvancedRoute(NewAdvancedRouteMixin(true))
+	assert.True(t, NewAdvancedRouteMixin(true).EnableWireMiddleware())
+	assert.False(t, NewAdvancedRouteMixin(false).EnableWireMiddleware())
+}
+
 func TestErrorToStatusCode(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, ErrorToStatusCode(xerror.New(ErrorBadRequest)))
 	assert.Equal(t, http.StatusUnauthorized, ErrorToStatusCode(xerror.New(ErrorUnauthorized)))

@@ -129,11 +129,7 @@ func (r *Router) MountRoute(route Route) *Router {
 
 	handler = kithttp.NewServer(
 		r.rootCtx,
-		r.chainMiddlewares(route.Endpoint,
-			r.getTokenMiddleware(route.IsAuthenticated()),
-			NewWireMiddleware(),
-			//NewMetricsMiddleware(r.metricsReporter),
-			NewLoggingMiddleware(r.transportLogger)),
+		r.getEndpointWithMiddlewares(route),
 		route.Decoder,
 		route.Encoder,
 		kithttp.ServerBefore(WireExtractor, TokenExtractor, RequestPathExtractor, TraceIDExtractor),
@@ -150,14 +146,23 @@ func (r *Router) MountRoute(route Route) *Router {
 	return r
 }
 
-func (r *Router) getTokenMiddleware(authenticated bool) endpoint.Middleware {
-	if authenticated {
-		return NewTokenMiddleware(r.tokenVerifier)
-	}
-	return NewNoTokenMiddleware()
-}
+func (r *Router) getEndpointWithMiddlewares(route Route) endpoint.Endpoint {
+	middlewares := make([]endpoint.Middleware, 0, 10)
 
-func (r *Router) chainMiddlewares(endpoint endpoint.Endpoint, middlewares ...endpoint.Middleware) endpoint.Endpoint {
+	if route.IsAuthenticated() {
+		middlewares = append(middlewares, NewTokenMiddleware(r.tokenVerifier))
+	} else {
+		middlewares = append(middlewares, NewNoTokenMiddleware())
+	}
+
+	if advancedRoute, ok := route.(AdvancedRoute); !ok || (ok && advancedRoute.EnableWireMiddleware()) {
+		middlewares = append(middlewares, NewWireMiddleware())
+	}
+
+	// middlewares = append(middlewares, NewMetricsMiddleware(r.metricsReporter)
+	middlewares = append(middlewares, NewLoggingMiddleware(r.transportLogger))
+
+	endpoint := route.Endpoint
 	for _, middleware := range middlewares {
 		endpoint = middleware(endpoint)
 	}
@@ -297,4 +302,26 @@ func (d *JSONDecoderMixin) Decoder(ctx context.Context, r *http.Request) (interf
 		return nil, xerror.Wrap(err, ErrorBadRequest)
 	}
 	return parsedBody, nil
+}
+
+// AdvancedRoute exposes advanced customization options that are not needed by all routes.
+type AdvancedRoute interface {
+	EnableWireMiddleware() bool
+}
+
+// AdvancedRouteMixin is a mixin implementing the AdvancedRoute interface.
+type AdvancedRouteMixin struct {
+	enableWireMiddleware bool
+}
+
+// NewAdvancedRouteMixin initializes a ned AdvancedRouteMixin.
+func NewAdvancedRouteMixin(enableWireMiddleware bool) *AdvancedRouteMixin {
+	return &AdvancedRouteMixin{
+		enableWireMiddleware: enableWireMiddleware,
+	}
+}
+
+// EnableWireMiddleware implements the AdvancedRoute mixin.
+func (a *AdvancedRouteMixin) EnableWireMiddleware() bool {
+	return a.enableWireMiddleware
 }
