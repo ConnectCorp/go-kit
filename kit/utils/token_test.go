@@ -4,6 +4,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ const (
 	keyID    = "k1"
 	issuer   = "https://test-issuer"
 	audience = "connect-test"
+	purpose  = "test-role"
 )
 
 var privateKey = []byte(`
@@ -117,13 +119,25 @@ func TestIssue(t *testing.T) {
 	assert.Nil(t, err)
 	assert.EqualValues(t, defaultSystemUserID, sub)
 	assert.Equal(t, TokenAccessSystemRole, role)
+
+	customClaims := map[string]interface{}{"test": "v"}
+	descriptor := NewSinglePurposeTokenDescriptor(purpose, true, DefaultSinglePurposeTokenLifetime, map[string]reflect.Type{"test": reflect.TypeOf("")})
+	spt, err := ti.IssueSinglePurposeToken(descriptor, 1, customClaims)
+	assert.Nil(t, err)
+	sub, foundClaims, err := tv.VerifySinglePurposeToken(spt, descriptor)
+	assert.EqualValues(t, 1, sub)
+	assert.Equal(t, customClaims, foundClaims)
+
 }
 
 func TestVerify(t *testing.T) {
 	tv, err := NewTokenVerifier(keyID, publicKey, issuer, audience)
 	assert.Nil(t, err)
 
-	goodToken, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey)
+	subDescriptor := NewSinglePurposeTokenDescriptor(purpose, true, DefaultSinglePurposeTokenLifetime, map[string]reflect.Type{"test": reflect.TypeOf("")})
+	noSubDescriptor := NewSinglePurposeTokenDescriptor(purpose, false, DefaultSinglePurposeTokenLifetime, map[string]reflect.Type{"test": reflect.TypeOf("")})
+
+	goodToken, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	sub, role, err := tv.VerifyToken(goodToken)
 	assert.Nil(t, err)
@@ -136,55 +150,126 @@ func TestVerify(t *testing.T) {
 	_, _, err = tv.VerifyToken("bad")
 	assert.Equal(t, "invalid token: token contains an invalid number of segments", err.Error())
 
-	badKeyID, err := issueTestToken(time.Now(), "k2", currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey)
+	badKeyID, err := issueTestToken(time.Now(), "k2", currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badKeyID)
 	assert.Equal(t, "invalid token: invalid token header", err.Error())
 
-	badKey, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, otherPrivateKey)
+	badKey, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, otherPrivateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badKey)
 	assert.Equal(t, "invalid token: crypto/rsa: verification error", err.Error())
 
-	badTokenVersion, err := issueTestToken(time.Now(), keyID, "v2", "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey)
+	badTokenVersion, err := issueTestToken(time.Now(), keyID, "v2", "1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badTokenVersion)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badSub, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "a", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey)
+	badSub, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "a", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badSub)
 	assert.Equal(t, "invalid token: strconv.ParseInt: parsing \"a\": invalid syntax", err.Error())
 
-	badSub, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1.1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey)
+	badSub, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1.1", TokenAccessUserRole, issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badSub)
 	assert.Equal(t, "invalid token: strconv.ParseInt: parsing \"1.1\": invalid syntax", err.Error())
 
-	badRole, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", "bad", issuer, audience, DefaultAccessTokenLifetime, privateKey)
+	badRole, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", "bad", issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badRole)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badIssuer, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, "bad", audience, DefaultAccessTokenLifetime, privateKey)
+	badIssuer, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, "bad", audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badIssuer)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badAudience, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, "bad", DefaultAccessTokenLifetime, privateKey)
+	badAudience, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, "bad", DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badAudience)
 	assert.Equal(t, "invalid token", err.Error())
 
-	badSubForSystem, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessSystemRole, issuer, audience, DefaultAccessTokenLifetime, privateKey)
+	badSubForSystem, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", TokenAccessSystemRole, issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(badSubForSystem)
 	assert.Equal(t, "invalid token", err.Error())
 
-	expired, err := issueTestToken(time.Now().Add(-time.Hour), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, time.Minute, privateKey)
+	expired, err := issueTestToken(time.Now().Add(-time.Hour), keyID, currentTokenVersion, "1", TokenAccessUserRole, issuer, audience, time.Minute, privateKey, map[string]interface{}{})
 	assert.Nil(t, err)
 	_, _, err = tv.VerifyToken(expired)
 	assert.True(t, strings.HasPrefix(err.Error(), "invalid token: token is expired"))
+
+	////////
+
+	goodClaims := map[string]interface{}{"test": "v"}
+	goodToken, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1", purpose, issuer, audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	sub, claims, err := tv.VerifySinglePurposeToken(goodToken, subDescriptor)
+	assert.Nil(t, err)
+	assert.EqualValues(t, 1, sub)
+	assert.Equal(t, goodClaims, claims)
+
+	_, _, err = tv.VerifySinglePurposeToken("", subDescriptor)
+	assert.Equal(t, "invalid token: token contains an invalid number of segments", err.Error())
+
+	_, _, err = tv.VerifySinglePurposeToken("bad", subDescriptor)
+	assert.Equal(t, "invalid token: token contains an invalid number of segments", err.Error())
+
+	badKeyID, err = issueTestToken(time.Now(), "k2", currentTokenVersion, "1", purpose, issuer, audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badKeyID, subDescriptor)
+	assert.Equal(t, "invalid token: invalid token header", err.Error())
+
+	badKey, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1", purpose, issuer, audience, DefaultAccessTokenLifetime, otherPrivateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badKey, subDescriptor)
+	assert.Equal(t, "invalid token: crypto/rsa: verification error", err.Error())
+
+	badTokenVersion, err = issueTestToken(time.Now(), keyID, "v2", "1", purpose, issuer, audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badTokenVersion, subDescriptor)
+	assert.Equal(t, "invalid token", err.Error())
+
+	badSub, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "a", purpose, issuer, audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badSub, subDescriptor)
+	assert.Equal(t, "invalid token: strconv.ParseInt: parsing \"a\": invalid syntax", err.Error())
+
+	badSub, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1.1", purpose, issuer, audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badSub, subDescriptor)
+	assert.Equal(t, "invalid token: strconv.ParseInt: parsing \"1.1\": invalid syntax", err.Error())
+
+	badRole, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1", "bad", issuer, audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badRole, subDescriptor)
+	assert.Equal(t, "invalid token", err.Error())
+
+	badIssuer, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1", purpose, "bad", audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badIssuer, subDescriptor)
+	assert.Equal(t, "invalid token", err.Error())
+
+	badAudience, err = issueTestToken(time.Now(), keyID, currentTokenVersion, "1", purpose, issuer, "bad", DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badAudience, subDescriptor)
+	assert.Equal(t, "invalid token", err.Error())
+
+	badSubForNoSubDescriptor, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", purpose, issuer, audience, DefaultAccessTokenLifetime, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badSubForNoSubDescriptor, noSubDescriptor)
+	assert.Equal(t, "invalid token", err.Error())
+
+	expired, err = issueTestToken(time.Now().Add(-time.Hour), keyID, currentTokenVersion, "1", purpose, issuer, audience, time.Minute, privateKey, goodClaims)
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(expired, subDescriptor)
+	assert.True(t, strings.HasPrefix(err.Error(), "invalid token: token is expired"))
+
+	badClaims, err := issueTestToken(time.Now(), keyID, currentTokenVersion, "1", purpose, issuer, audience, DefaultAccessTokenLifetime, privateKey, map[string]interface{}{})
+	assert.Nil(t, err)
+	_, _, err = tv.VerifySinglePurposeToken(badClaims, subDescriptor)
+	assert.Equal(t, err.Error(), "invalid token: missing custom claims: map[test:true]")
 }
 
 func TestIssuerInit(t *testing.T) {
@@ -215,7 +300,50 @@ func TestVerifierInit(t *testing.T) {
 	assert.Equal(t, "invalid audience: bad", err.Error())
 }
 
-func issueTestToken(issuedAt time.Time, keyID, tokenVersion, sub, role, issuer, audience string, lifetime time.Duration, privateKey []byte) (string, error) {
+func TestValidateCustomclaims(t *testing.T) {
+	type someStruct struct{}
+
+	allowedCustomClaims := map[string]reflect.Type{
+		"string":    reflect.TypeOf(""),
+		"int":       reflect.TypeOf(0),
+		"struct":    reflect.TypeOf(someStruct{}),
+		"structPtr": reflect.TypeOf(&someStruct{}),
+	}
+
+	// Valid custom claims.
+	assert.Nil(t, validateCustomClaims(allowedCustomClaims, map[string]interface{}{
+		"string":    "",
+		"int":       0,
+		"struct":    someStruct{},
+		"structPtr": &someStruct{},
+	}))
+
+	// Missing claim.
+	assert.NotNil(t, validateCustomClaims(allowedCustomClaims, map[string]interface{}{
+		"string": "",
+		"int":    0,
+		"struct": someStruct{},
+	}))
+
+	// Extra claim.
+	assert.NotNil(t, validateCustomClaims(allowedCustomClaims, map[string]interface{}{
+		"string":    "",
+		"int":       0,
+		"struct":    someStruct{},
+		"structPtr": &someStruct{},
+		"extra":     "",
+	}))
+
+	// Wrong type.
+	assert.NotNil(t, validateCustomClaims(allowedCustomClaims, map[string]interface{}{
+		"string":    "",
+		"int":       "",
+		"struct":    someStruct{},
+		"structPtr": &someStruct{},
+	}))
+}
+
+func issueTestToken(issuedAt time.Time, keyID, tokenVersion, sub, role, issuer, audience string, lifetime time.Duration, privateKey []byte, claims map[string]interface{}) (string, error) {
 	t := jwt.New(jwt.SigningMethodRS256)
 
 	t.Header[keyIDHeader] = keyID
@@ -226,6 +354,10 @@ func issueTestToken(issuedAt time.Time, keyID, tokenVersion, sub, role, issuer, 
 	t.Claims[audienceHeader] = audience
 	t.Claims[issuedAtHeader] = issuedAt.Unix()
 	t.Claims[expirationHeader] = issuedAt.Add(lifetime).Unix()
+
+	for cN, cV := range claims {
+		t.Claims[cN] = cV
+	}
 
 	s, err := t.SignedString(privateKey)
 	if err != nil {
