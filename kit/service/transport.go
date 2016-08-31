@@ -136,6 +136,10 @@ func (r *Router) MountRoute(route Route) *Router {
 		kithttp.ServerErrorEncoder(route.ErrorEncoder),
 		kithttp.ServerAfter(TraceIDSetter))
 
+	if route.CORSEnabled() {
+		handler = corsMiddleware(handler)
+	}
+
 	//Optionally report performance metrics to newrelic
 	if r.newrelicApp != nil {
 		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
@@ -194,13 +198,14 @@ func corsMiddleware(handler http.Handler) http.Handler {
 
 // Run exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
 func (r *Router) Run(addr string) {
-	graceful.Run(addr, defaultShutdownLameDuckTimeout, corsMiddleware(r.mux))
+	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
 }
 
 // Route describes a route to an endpoint in a Router.
 type Route interface {
 	Authentication
 
+	CORSEnabled() bool
 	GetMethod() string
 	GetPath() string
 	Endpoint(ctx context.Context, request interface{}) (response interface{}, err error) // endpoint.Endpoint
