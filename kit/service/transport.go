@@ -184,7 +184,6 @@ func (r *Router) GetPrefixMux() *mux.Router {
 }
 
 func corsMiddleware(handler http.Handler) http.Handler {
-
 	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
@@ -192,7 +191,6 @@ func corsMiddleware(handler http.Handler) http.Handler {
 			handler.ServeHTTP(w, r)
 		}
 	})
-
 	return handlers.CORS(corsAllowedHeaders, corsAllowedMethods, corsAllowedOrigins)(wrapper)
 }
 

@@ -10,6 +10,7 @@ import (
 	"gopkg.in/ibrt/go-xerror.v2/xerror"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -55,4 +56,63 @@ func TestErrorToStatusCode(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, ErrorToStatusCode(xerror.New(ErrorUnexpected)))
 	assert.Equal(t, http.StatusInternalServerError, ErrorToStatusCode(xerror.New("some-error")))
 	assert.Equal(t, http.StatusInternalServerError, ErrorToStatusCode(fmt.Errorf("some-error")))
+}
+
+func TestCORSBadHeaders(t *testing.T) {
+	var handler http.Handler
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com")
+	req.Header.Add("Access-Control-Request-Method", "PUT")
+	req.Header.Add("Access-Control-Request-headers", "Bad-Header-Type")
+	handler = corsMiddleware(handler)
+	handler.ServeHTTP(res, req)
+	assert.Equal(t, res.Code, 403)
+	assertHeaders(t, res.Header(), map[string]string{
+		"Origin":                       "",
+		"Access-Control-Allow-Methods": "",
+		"Access-Control-Allow-Headers": "",
+	})
+}
+
+func TestCORSBadMethod(t *testing.T) {
+	var handler http.Handler
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com")
+	req.Header.Add("Access-Control-Request-Method", "OPTIONS")
+	req.Header.Add("Access-Control-Request-headers", "X-Connect-Client-Type")
+	handler = corsMiddleware(handler)
+	handler.ServeHTTP(res, req)
+	assert.Equal(t, res.Code, 405)
+	assertHeaders(t, res.Header(), map[string]string{
+		"Origin":                       "",
+		"Access-Control-Allow-Methods": "",
+		"Access-Control-Allow-Headers": "",
+	})
+}
+
+func TestCORSCorrectHeaders(t *testing.T) {
+	var handler http.Handler
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("OPTIONS", "http://example.com/foo", nil)
+	req.Header.Add("Origin", "http://example.com")
+	req.Header.Add("Access-Control-Request-Method", "PUT")
+	req.Header.Add("Access-Control-Request-headers", "X-Connect-Client-Type")
+	handler = corsMiddleware(handler)
+	handler.ServeHTTP(res, req)
+	assert.Equal(t, res.Code, 200)
+	assertHeaders(t, res.Header(), map[string]string{
+		"Origin":                       "",
+		"Access-Control-Allow-Methods": "PUT",
+		"Access-Control-Allow-Headers": "X-Connect-Client-Type",
+	})
+}
+
+func assertHeaders(t *testing.T, resHeaders http.Header, reqHeaders map[string]string) {
+	for name, value := range reqHeaders {
+		if actual := strings.Join(resHeaders[name], ", "); actual != value {
+			t.Errorf("Invalid header `%s', wanted `%s', got `%s'", name, value, actual)
+		}
+	}
 }
