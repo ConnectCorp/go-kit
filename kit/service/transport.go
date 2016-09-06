@@ -88,6 +88,7 @@ type Router struct {
 	mux             *mux.Router
 	prefixMux       *mux.Router
 	newrelicApp     newrelic.Application
+	corsEnabled     bool
 }
 
 // NewRouter initializes a new Router.
