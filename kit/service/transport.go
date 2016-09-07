@@ -145,7 +145,7 @@ func (r *Router) MountRoute(route Route) *Router {
 		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
 	}
 
-	if route.CORSEnabled() {
+	if advancedRoute, ok := route.(AdvancedRoute); !ok || (ok && advancedRoute.EnableCORSMiddleware()) {
 		handler = corsMiddleware(handler)
 		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(preflightHandler())
 	}
@@ -209,7 +209,6 @@ func (r *Router) Run(addr string) {
 type Route interface {
 	Authentication
 
-	CORSEnabled() bool
 	GetMethod() string
 	GetPath() string
 	Endpoint(ctx context.Context, request interface{}) (response interface{}, err error) // endpoint.Endpoint
@@ -316,21 +315,29 @@ func (d *JSONDecoderMixin) Decoder(ctx context.Context, r *http.Request) (interf
 // AdvancedRoute exposes advanced customization options that are not needed by all routes.
 type AdvancedRoute interface {
 	EnableWireMiddleware() bool
+	EnableCORSMiddleware() bool
 }
 
 // AdvancedRouteMixin is a mixin implementing the AdvancedRoute interface.
 type AdvancedRouteMixin struct {
 	enableWireMiddleware bool
+	enableCORSMiddleware bool
 }
 
 // NewAdvancedRouteMixin initializes a ned AdvancedRouteMixin.
-func NewAdvancedRouteMixin(enableWireMiddleware bool) AdvancedRouteMixin {
+func NewAdvancedRouteMixin(enableWireMiddleware bool, enableCORSMiddleware bool) AdvancedRouteMixin {
 	return AdvancedRouteMixin{
 		enableWireMiddleware: enableWireMiddleware,
+		enableCORSMiddleware: enableCORSMiddleware,
 	}
 }
 
 // EnableWireMiddleware implements the AdvancedRoute interface.
 func (a *AdvancedRouteMixin) EnableWireMiddleware() bool {
 	return a.enableWireMiddleware
+}
+
+// EnableCORSMiddleware implements the AdvancedRoute interface.
+func (a *AdvancedRouteMixin) EnableCORSMiddleware() bool {
+	return a.enableCORSMiddleware
 }

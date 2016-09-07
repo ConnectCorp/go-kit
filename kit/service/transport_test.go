@@ -20,6 +20,7 @@ type testRoute struct {
 	MethodAndPathMixin
 	JSONEncoderMixin
 	JSONErrorEncoderMixin
+	AdvancedRouteMixin
 
 	enableCors bool
 }
@@ -30,6 +31,7 @@ func newTestRoute(flag bool) *testRoute {
 	return &testRoute{
 		AuthenticationMixin: NewRequireAuthenticationMixin(),
 		MethodAndPathMixin:  NewMethodAndPathMixin("GET", "/test"),
+		AdvancedRouteMixin:  NewAdvancedRouteMixin(false, flag),
 		enableCors:          flag,
 	}
 }
@@ -70,10 +72,13 @@ func TestJSONErrorEncoderMixin(t *testing.T) {
 }
 
 func TestAdvancedRouteMixin(t *testing.T) {
-	mixin := NewAdvancedRouteMixin(true)
+	mixin := NewAdvancedRouteMixin(true, true)
 	assert.True(t, (&mixin).EnableWireMiddleware())
-	mixin = NewAdvancedRouteMixin(false)
+	assert.True(t, (&mixin).EnableCORSMiddleware())
+	mixin = NewAdvancedRouteMixin(false, false)
 	assert.False(t, (&mixin).EnableWireMiddleware())
+	assert.False(t, (&mixin).EnableCORSMiddleware())
+
 }
 
 func TestErrorToStatusCode(t *testing.T) {
