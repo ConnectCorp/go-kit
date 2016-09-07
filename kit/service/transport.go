@@ -147,7 +147,7 @@ func (r *Router) MountRoute(route Route) *Router {
 
 	if route.CORSEnabled() {
 		handler = corsMiddleware(handler)
-		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(dummyHandler())
+		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(preflightHandler())
 	}
 
 	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
@@ -190,7 +190,7 @@ func (r *Router) GetPrefixMux() *mux.Router {
 
 
 
-func dummyHandler() http.Handler {
+func preflightHandler() http.Handler {
 	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
