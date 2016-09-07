@@ -88,7 +88,6 @@ type Router struct {
 	mux             *mux.Router
 	prefixMux       *mux.Router
 	newrelicApp     newrelic.Application
-	corsEnabled     bool
 }
 
 // NewRouter initializes a new Router.
@@ -146,6 +145,11 @@ func (r *Router) MountRoute(route Route) *Router {
 		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
 	}
 
+	if route.CORSEnabled() {
+		handler = corsMiddleware(handler)
+		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(handler)
+	}
+
 	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
 
 	return r
@@ -184,6 +188,7 @@ func (r *Router) GetPrefixMux() *mux.Router {
 	return r.prefixMux
 }
 
+
 func corsMiddleware(handler http.Handler) http.Handler {
 	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "OPTIONS" {
@@ -192,6 +197,7 @@ func corsMiddleware(handler http.Handler) http.Handler {
 			handler.ServeHTTP(w, r)
 		}
 	})
+
 	return handlers.CORS(corsAllowedHeaders, corsAllowedMethods, corsAllowedOrigins)(wrapper)
 }
 
