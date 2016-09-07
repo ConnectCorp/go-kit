@@ -147,7 +147,7 @@ func (r *Router) MountRoute(route Route) *Router {
 
 	if route.CORSEnabled() {
 		handler = corsMiddleware(handler)
-		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(handler)
+		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(dummyHandler())
 	}
 
 	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
@@ -189,16 +189,17 @@ func (r *Router) GetPrefixMux() *mux.Router {
 }
 
 
-func corsMiddleware(handler http.Handler) http.Handler {
+
+func dummyHandler() http.Handler {
 	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-		} else {
-			handler.ServeHTTP(w, r)
-		}
+		w.WriteHeader(http.StatusOK)
 	})
 
 	return handlers.CORS(corsAllowedHeaders, corsAllowedMethods, corsAllowedOrigins)(wrapper)
+}
+
+func corsMiddleware(handler http.Handler) http.Handler {
+	return handlers.CORS(corsAllowedHeaders, corsAllowedMethods, corsAllowedOrigins)(handler)
 }
 
 // Run exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
