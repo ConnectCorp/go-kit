@@ -188,8 +188,6 @@ func (r *Router) GetPrefixMux() *mux.Router {
 	return r.prefixMux
 }
 
-
-
 func preflightHandler() http.Handler {
 	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
