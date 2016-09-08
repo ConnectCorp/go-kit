@@ -141,6 +141,11 @@ func (r *Router) MountRoute(route Route) *Router {
 		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
 	}
 
+	if advancedRoute, ok := route.(AdvancedRoute); ok && advancedRoute.EnableCORSMiddleware() {
+		handler = corsMiddleware(handler)
+		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(preflightHandler())
+	}
+
 	r.prefixMux.Methods(route.GetMethod()).Path(route.GetPath()).Handler(handler)
 
 	return r
@@ -179,22 +184,21 @@ func (r *Router) GetPrefixMux() *mux.Router {
 	return r.prefixMux
 }
 
-func corsMiddleware(handler http.Handler) http.Handler {
-
+func preflightHandler() http.Handler {
 	wrapper := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-		} else {
-			handler.ServeHTTP(w, r)
-		}
+		w.WriteHeader(http.StatusOK)
 	})
 
 	return handlers.CORS(corsAllowedHeaders, corsAllowedMethods, corsAllowedOrigins)(wrapper)
 }
 
+func corsMiddleware(handler http.Handler) http.Handler {
+	return handlers.CORS(corsAllowedHeaders, corsAllowedMethods, corsAllowedOrigins)(handler)
+}
+
 // Run exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
 func (r *Router) Run(addr string) {
-	graceful.Run(addr, defaultShutdownLameDuckTimeout, corsMiddleware(r.mux))
+	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
 }
 
 // Route describes a route to an endpoint in a Router.
@@ -307,21 +311,29 @@ func (d *JSONDecoderMixin) Decoder(ctx context.Context, r *http.Request) (interf
 // AdvancedRoute exposes advanced customization options that are not needed by all routes.
 type AdvancedRoute interface {
 	EnableWireMiddleware() bool
+	EnableCORSMiddleware() bool
 }
 
 // AdvancedRouteMixin is a mixin implementing the AdvancedRoute interface.
 type AdvancedRouteMixin struct {
 	enableWireMiddleware bool
+	enableCORSMiddleware bool
 }
 
 // NewAdvancedRouteMixin initializes a ned AdvancedRouteMixin.
-func NewAdvancedRouteMixin(enableWireMiddleware bool) AdvancedRouteMixin {
+func NewAdvancedRouteMixin(enableWireMiddleware bool, enableCORSMiddleware bool) AdvancedRouteMixin {
 	return AdvancedRouteMixin{
 		enableWireMiddleware: enableWireMiddleware,
+		enableCORSMiddleware: enableCORSMiddleware,
 	}
 }
 
 // EnableWireMiddleware implements the AdvancedRoute interface.
 func (a *AdvancedRouteMixin) EnableWireMiddleware() bool {
 	return a.enableWireMiddleware
+}
+
+// EnableCORSMiddleware implements the AdvancedRoute interface.
+func (a *AdvancedRouteMixin) EnableCORSMiddleware() bool {
+	return a.enableCORSMiddleware
 }
