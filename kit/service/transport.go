@@ -136,16 +136,12 @@ func (r *Router) MountRoute(route Route) *Router {
 		kithttp.ServerErrorEncoder(route.ErrorEncoder),
 		kithttp.ServerAfter(TraceIDSetter))
 
-	if route.CORSEnabled() {
-		handler = corsMiddleware(handler)
-	}
-
 	//Optionally report performance metrics to newrelic
 	if r.newrelicApp != nil {
 		_, handler = newrelic.WrapHandle(r.newrelicApp, route.GetPath(), handler)
 	}
 
-	if advancedRoute, ok := route.(AdvancedRoute); !ok || (ok && advancedRoute.EnableCORSMiddleware()) {
+	if advancedRoute, ok := route.(AdvancedRoute); ok && advancedRoute.EnableCORSMiddleware() {
 		handler = corsMiddleware(handler)
 		r.prefixMux.Methods("OPTIONS").Path(route.GetPath()).Handler(preflightHandler())
 	}

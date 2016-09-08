@@ -21,8 +21,6 @@ type testRoute struct {
 	JSONEncoderMixin
 	JSONErrorEncoderMixin
 	AdvancedRouteMixin
-
-	enableCors bool
 }
 
 type testRouteData struct{}
@@ -32,11 +30,8 @@ func newTestRoute(flag bool) *testRoute {
 		AuthenticationMixin: NewRequireAuthenticationMixin(),
 		MethodAndPathMixin:  NewMethodAndPathMixin("GET", "/test"),
 		AdvancedRouteMixin:  NewAdvancedRouteMixin(false, flag),
-		enableCors:          flag,
 	}
 }
-
-func (g *testRoute) CORSEnabled() bool { return g.enableCors }
 
 func (g *testRoute) Endpoint(ctx context.Context, request interface{}) (interface{}, error) {
 	return nil, nil
