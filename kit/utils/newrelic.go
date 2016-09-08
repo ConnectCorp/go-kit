@@ -8,21 +8,7 @@ import (
 
 // NoopNewrelicTransaction implements a noop newrelic.Transaction.
 type NoopNewrelicTransaction struct {
-}
-
-// Header implements http.ResponseWriter.
-func (*NoopNewrelicTransaction) Header() http.Header {
-	return http.Header{}
-}
-
-// Write implements http.ResponseWriter.
-func (*NoopNewrelicTransaction) Write(b []byte) (int, error) {
-	return len(b), nil
-}
-
-// WriteHeader implements http.ResponseWriter.
-func (*NoopNewrelicTransaction) WriteHeader(int) {
-	// Noop.
+	http.ResponseWriter
 }
 
 // End implements newrelic.Transaction.
@@ -87,7 +73,7 @@ type NoopNewrelicApplication struct {
 
 // StartTransaction implements newrelic.Application.
 func (*NoopNewrelicApplication) StartTransaction(name string, w http.ResponseWriter, r *http.Request) api.Transaction {
-	return &NoopNewrelicTransaction{}
+	return &NoopNewrelicTransaction{ResponseWriter: w}
 }
 
 // RecordCustomEvent implements newrelic.Application.
