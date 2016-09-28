@@ -198,6 +198,7 @@ func corsMiddleware(handler http.Handler) http.Handler {
 
 // Run exposes the Router on the given address spec. Blocks forever, or until a fatal error occurs.
 func (r *Router) Run(addr string) {
+	r.newrelicApp.StartTransaction("startup", nil, nil).End()
 	graceful.Run(addr, defaultShutdownLameDuckTimeout, r.mux)
 }
 
