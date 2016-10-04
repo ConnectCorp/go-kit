@@ -1,5 +1,5 @@
-hash: a950cc69685ba0d54abc1c14e73b64baf3208d733c201cc3aa8a98640623a32e
-updated: 2016-08-22T21:45:59.25862817+01:00
+hash: e639ca3442a6877d3e57cb444c36278b6f10ad3daf4514073ce69fb4f7feb244
+updated: 2016-10-04T10:29:39.912611541-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 8f2725740345a0561fa09669f5f75f905404ef8b
@@ -74,6 +74,8 @@ imports:
   version: bdae0c3219c3bdb92f3d7c70825018712787c933
   subpackages:
   - reflectx
+- name: github.com/johnnadratowski/golang-neo4j-bolt-driver
+  version: cbce611fd243658cc56a502d6edc81af26400103
 - name: github.com/kelseyhightower/envconfig
   version: 91921eb4cf999321cdbeebdba5a03555800d493b
 - name: github.com/kr/logfmt
@@ -86,8 +88,8 @@ imports:
   version: 32a6da2f59d59ace7baeb67451c6695f5524a39d
   subpackages:
   - api
-  - internal
   - api/datastore
+  - internal
   - api/attributes
   - internal/jsonx
   - internal/utilization

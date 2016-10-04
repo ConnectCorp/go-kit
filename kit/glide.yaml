@@ -39,3 +39,4 @@ import:
   - aws
 - package: github.com/newrelic/go-agent
 - package: github.com/gorilla/handlers
+- package: github.com/johnnadratowski/golang-neo4j-bolt-driver
