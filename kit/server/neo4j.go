@@ -1,15 +1,15 @@
 package server
 
 import (
-	"net/url"
-	neo4j "github.com/johnnadratowski/golang-neo4j-bolt-driver"
 	"github.com/ConnectCorp/go-kit/kit/utils"
+	neo4j "github.com/johnnadratowski/golang-neo4j-bolt-driver"
+	"net/url"
 	"time"
 )
 
 const (
-	baseNeo4JInitDelay     = 25 * time.Millisecond
-	maxNeo4JInitRetryCount = 10
+	baseNeo4JInitDelay         = 25 * time.Millisecond
+	maxNeo4JInitRetryCount     = 10
 	defaultNeo4JDriverPoolSize = 10
 )
 
