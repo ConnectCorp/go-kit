@@ -1,5 +1,5 @@
-hash: e639ca3442a6877d3e57cb444c36278b6f10ad3daf4514073ce69fb4f7feb244
-updated: 2016-10-04T10:29:39.912611541-07:00
+hash: 65e35471e773d222c1753245497aca62759f782bf53c0d573acf3c41a475ab07
+updated: 2016-10-05T15:56:51.404115792-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 8f2725740345a0561fa09669f5f75f905404ef8b
@@ -75,7 +75,14 @@ imports:
   subpackages:
   - reflectx
 - name: github.com/johnnadratowski/golang-neo4j-bolt-driver
-  version: cbce611fd243658cc56a502d6edc81af26400103
+  version: d207d9de78257d73d02225609fd661873f5c966a
+  subpackages:
+  - encoding
+  - errors
+  - log
+  - structures/graph
+  - structures/messages
+  - structures
 - name: github.com/kelseyhightower/envconfig
   version: 91921eb4cf999321cdbeebdba5a03555800d493b
 - name: github.com/kr/logfmt
@@ -140,6 +147,8 @@ imports:
   version: 9d39aa23da7ceafa91c2a10d68e87e515d3049d8
   subpackages:
   - xerror
+- name: gopkg.in/olivere/elastic.v2
+  version: 4ca0a93672aab0aacb92e0ed205bdf1d3a81f9ed
 - name: gopkg.in/redis.v3
   version: a905127dc89ca51a241eacf70757a40423ab93d0
   subpackages:
