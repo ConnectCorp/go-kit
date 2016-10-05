@@ -20,7 +20,17 @@ func MustInitNeo4J(spec *url.URL) neo4j.DriverPool {
 
 	utils.MustBackoff(baseNeo4JInitDelay, maxNeo4JInitRetryCount, func() error {
 		driverPool, err = neo4j.NewDriverPool(spec.String(), defaultNeo4JDriverPoolSize)
-		return err
+		if err != nil {
+			return err
+		}
+
+		conn, err := driverPool.OpenPool()
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+
+		return nil
 	})
 
 	return driverPool
