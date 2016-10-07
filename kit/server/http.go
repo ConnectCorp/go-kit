@@ -40,24 +40,22 @@ func MakeAWSSigningHTTPClient(retry rehttp.RetryFn) *http.Client {
 		}
 	}
 
-	transport := &AWSSigningHTTPTransport{
+	return &http.Client{
 		Transport: rehttp.NewTransport(
-			&http.Transport{
-				// Note that this ignores environment proxy settings for security reasons.
-				Dial: (&net.Dialer{
-					Timeout:   defaultDialerTimeout,
-					KeepAlive: defaultDialerKeepAliveTimeout,
-				}).Dial,
-				TLSHandshakeTimeout:   defaultTLSHandshakeTimeout,
-				ResponseHeaderTimeout: defaultResponseHeaderTimeout,
-				ExpectContinueTimeout: defaultExpectContinueTimeout,
+			&AWSSigningHTTPTransport{
+				Transport: &http.Transport{
+					// Note that this ignores environment proxy settings for security reasons.
+					Dial: (&net.Dialer{
+						Timeout:   defaultDialerTimeout,
+						KeepAlive: defaultDialerKeepAliveTimeout,
+					}).Dial,
+					TLSHandshakeTimeout:   defaultTLSHandshakeTimeout,
+					ResponseHeaderTimeout: defaultResponseHeaderTimeout,
+					ExpectContinueTimeout: defaultExpectContinueTimeout,
+				},
 			},
 			retry,
 			rehttp.ExpJitterDelay(defaultBaseExpJitterDelay, defaultMaxExpJitterDelay)),
-	}
-
-	return &http.Client{
-		Transport: transport,
 	}
 }
 
