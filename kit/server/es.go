@@ -19,7 +19,7 @@ func MustInitES(esSpec *url.URL) *elastic.Client {
 	var err error
 
 	utils.MustBackoff(baseESInitDelay, maxESInitRetryCount, func() error {
-		es, err = elastic.NewClient(elastic.SetURL(esSpec.String()), elastic.SetMaxRetries(defaultESMaxRetries), elastic.SetSniff(false))
+		es, err = elastic.NewClient(elastic.SetURL(esSpec.String()), elastic.SetMaxRetries(defaultESMaxRetries), elastic.SetSniff(false), elastic.SetHttpClient(MakeAWSSigningHTTPClient(nil)))
 		return err
 	})
 

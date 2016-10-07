@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/tls"
 	"github.com/PuerkitoBio/rehttp"
+	"github.com/smartystreets/go-aws-auth"
 	"net"
 	"net/http"
 	"net/url"
@@ -19,6 +20,44 @@ const (
 	defaultBaseExpJitterDelay     = 100 * time.Millisecond
 	defaultMaxExpJitterDelay      = 5 * time.Second
 )
+
+// AWSSigningHTTPTransport is an HTTP transport that signs AWS requests before sending them to the server.
+type AWSSigningHTTPTransport struct {
+	*http.Transport
+}
+
+// RoundTrip implements the http.RoundTripper interface.
+func (a *AWSSigningHTTPTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	awsauth.Sign(req)
+	return a.Transport.RoundTrip(req)
+}
+
+// MakeAWSSigningHTTPClient makes an http client that signs outgoing requests to AWS.
+func MakeAWSSigningHTTPClient(retry rehttp.RetryFn) *http.Client {
+	if retry == nil {
+		retry = func(attempt rehttp.Attempt) bool {
+			return false
+		}
+	}
+
+	return &http.Client{
+		Transport: rehttp.NewTransport(
+			&AWSSigningHTTPTransport{
+				Transport: &http.Transport{
+					// Note that this ignores environment proxy settings for security reasons.
+					Dial: (&net.Dialer{
+						Timeout:   defaultDialerTimeout,
+						KeepAlive: defaultDialerKeepAliveTimeout,
+					}).Dial,
+					TLSHandshakeTimeout:   defaultTLSHandshakeTimeout,
+					ResponseHeaderTimeout: defaultResponseHeaderTimeout,
+					ExpectContinueTimeout: defaultExpectContinueTimeout,
+				},
+			},
+			retry,
+			rehttp.ExpJitterDelay(defaultBaseExpJitterDelay, defaultMaxExpJitterDelay)),
+	}
+}
 
 // MakeProdHTTPClient makes an HTTP client suitable for use in production.
 func MakeProdHTTPClient(retry rehttp.RetryFn) *http.Client {
