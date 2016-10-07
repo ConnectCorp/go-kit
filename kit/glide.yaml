@@ -41,3 +41,4 @@ import:
 - package: github.com/gorilla/handlers
 - package: github.com/johnnadratowski/golang-neo4j-bolt-driver
 - package: gopkg.in/olivere/elastic.v2
+- package: github.com/smartystreets/go-aws-auth

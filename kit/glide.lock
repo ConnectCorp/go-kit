@@ -1,5 +1,5 @@
-hash: 65e35471e773d222c1753245497aca62759f782bf53c0d573acf3c41a475ab07
-updated: 2016-10-05T15:56:51.404115792-07:00
+hash: 8e3fc849d8845b8c70db7231df311dca23d2a2e3cf1998e515976218fe6ca4a2
+updated: 2016-10-07T11:33:17.744587642-07:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 8f2725740345a0561fa09669f5f75f905404ef8b
@@ -129,6 +129,8 @@ imports:
   version: 0e4cdf8b3b9956274b1b08f0758d429f14d24118
 - name: github.com/pusher/pusher-http-go
   version: 2bba5f217f6f0f4f0c0a9bb11b945b206b32bec5
+- name: github.com/smartystreets/go-aws-auth
+  version: 2043e6d0bb7e4c18464a7bba562acbe482e3cabd
 - name: github.com/stretchr/testify
   version: 8d64eb7173c7753d6419fd4a9caf057398611364
   subpackages:
@@ -149,6 +151,9 @@ imports:
   - xerror
 - name: gopkg.in/olivere/elastic.v2
   version: 4ca0a93672aab0aacb92e0ed205bdf1d3a81f9ed
+  subpackages:
+  - backoff
+  - uritemplates
 - name: gopkg.in/redis.v3
   version: a905127dc89ca51a241eacf70757a40423ab93d0
   subpackages:
