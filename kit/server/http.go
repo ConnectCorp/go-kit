@@ -28,7 +28,10 @@ type AWSSigningHTTPTransport struct {
 
 // RoundTrip implements the http.RoundTripper interface.
 func (a *AWSSigningHTTPTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	awsauth.Sign(req)
+	// Some libraries mistakenly pre-escape the RawPath.
+	// The signer library re-escapes it causing the wrong signature to be generated.
+	req.URL.RawPath = req.URL.Path
+	awsauth.Sign4(req)
 	return a.Transport.RoundTrip(req)
 }
 
