@@ -33,7 +33,7 @@ dependencies:
 
 test:
   pre:
-    - fgt golint "$IMPORT_PATH/$PACKAGE_NAME/..."
+    #- fgt golint "$IMPORT_PATH/$PACKAGE_NAME/..."
     - go vet "$IMPORT_PATH/$PACKAGE_NAME/..."
     - fgt go fmt "$IMPORT_PATH/$PACKAGE_NAME/..."
     - cd "$PRIVATE_GOPATH/src/$IMPORT_PATH/$PACKAGE_NAME" && glide install; exit 0
