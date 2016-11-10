@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"github.com/PuerkitoBio/rehttp"
 	"github.com/njern/gonexmo"
 )
