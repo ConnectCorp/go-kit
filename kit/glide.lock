@@ -1,5 +1,5 @@
-hash: 8e3fc849d8845b8c70db7231df311dca23d2a2e3cf1998e515976218fe6ca4a2
-updated: 2016-10-07T11:33:17.744587642-07:00
+hash: 0944ab8423a56514b6fc09600e05b0d35eddc7e7607862a9bd08bf1158abbbbd
+updated: 2016-11-14T23:22:45.127394392+01:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 8f2725740345a0561fa09669f5f75f905404ef8b
@@ -35,6 +35,11 @@ imports:
   - quantile
 - name: github.com/codahale/hdrhistogram
   version: f8ad88b59a584afeee9d334eff879b104439117b
+- name: github.com/ConnectCorp/go-kit
+  version: 7616621c94271a701e820236dd720d45cfeaece6
+  subpackages:
+  - kit/service
+  - kit/utils
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -68,6 +73,8 @@ imports:
   version: a5775781a543af3c6b9f5baf10995e4d14168950
 - name: github.com/gorilla/mux
   version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
+- name: github.com/guregu/null
+  version: 41961cea0328defc5f95c1c473f89ebf0d1813f6
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jmoiron/sqlx
@@ -161,4 +168,6 @@ imports:
   - internal/consistenthash
   - internal/hashtag
   - internal/pool
+- name: ithub.com/guregu/null
+  version: ""
 devImports: []
