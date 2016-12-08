@@ -1,34 +1,34 @@
-hash: 0944ab8423a56514b6fc09600e05b0d35eddc7e7607862a9bd08bf1158abbbbd
-updated: 2016-11-14T23:22:45.127394392+01:00
+hash: 249db6b72b14fc40c17e44076be79705292b742c442185ed5e2de167f2c2a27a
+updated: 2016-12-07T18:09:41.185986833-08:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 8f2725740345a0561fa09669f5f75f905404ef8b
   subpackages:
   - aws
+  - aws/awserr
+  - aws/awsutil
+  - aws/client
+  - aws/client/metadata
+  - aws/corehandlers
+  - aws/credentials
+  - aws/credentials/ec2rolecreds
+  - aws/defaults
+  - aws/ec2metadata
+  - aws/request
   - aws/session
+  - private/endpoints
+  - private/protocol
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
+  - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/xml/xmlutil
+  - private/signer/v4
+  - private/waiter
   - service/kinesis
   - service/ses
   - service/sns
-  - aws/awserr
-  - aws/credentials
-  - aws/client
-  - aws/corehandlers
-  - aws/defaults
-  - aws/request
-  - private/endpoints
-  - aws/awsutil
-  - aws/client/metadata
-  - private/protocol
-  - private/protocol/jsonrpc
-  - private/signer/v4
-  - private/waiter
-  - private/protocol/query
-  - aws/credentials/ec2rolecreds
-  - aws/ec2metadata
-  - private/protocol/json/jsonutil
-  - private/protocol/rest
-  - private/protocol/query/queryutil
-  - private/protocol/xml/xmlutil
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
   subpackages:
@@ -39,6 +39,7 @@ imports:
   version: 7616621c94271a701e820236dd720d45cfeaece6
   subpackages:
   - kit/service
+  - kit/test
   - kit/utils
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
@@ -54,10 +55,10 @@ imports:
   - endpoint
   - log
   - metrics
+  - metrics/dogstatsd
   - metrics/expvar
   - metrics/prometheus
   - transport/http
-  - metrics/dogstatsd
   - util/conn
 - name: github.com/go-logfmt/logfmt
   version: d4327190ff838312623b09bfeb50d7c93c8d9c1d
@@ -87,9 +88,9 @@ imports:
   - encoding
   - errors
   - log
+  - structures
   - structures/graph
   - structures/messages
-  - structures
 - name: github.com/kelseyhightower/envconfig
   version: 91921eb4cf999321cdbeebdba5a03555800d493b
 - name: github.com/kr/logfmt
@@ -102,14 +103,14 @@ imports:
   version: 32a6da2f59d59ace7baeb67451c6695f5524a39d
   subpackages:
   - api
+  - api/attributes
   - api/datastore
   - internal
-  - api/attributes
   - internal/jsonx
+  - internal/sysinfo
   - internal/utilization
   - log
   - version
-  - internal/sysinfo
 - name: github.com/njern/gonexmo
   version: 1a398efc044cc721e8ef88dc67f36989507599db
 - name: github.com/pmezard/go-difflib
@@ -161,6 +162,8 @@ imports:
   subpackages:
   - backoff
   - uritemplates
+- name: gopkg.in/olivere/elastic.v5
+  version: b272fab42387a42585235d56f8c6b53b13ddfb7d
 - name: gopkg.in/redis.v3
   version: a905127dc89ca51a241eacf70757a40423ab93d0
   subpackages:
@@ -168,6 +171,4 @@ imports:
   - internal/consistenthash
   - internal/hashtag
   - internal/pool
-- name: ithub.com/guregu/null
-  version: ""
-devImports: []
+testImports: []

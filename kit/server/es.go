@@ -2,7 +2,8 @@ package server
 
 import (
 	"github.com/ConnectCorp/go-kit/kit/utils"
-	"gopkg.in/olivere/elastic.v2"
+	"github.com/PuerkitoBio/rehttp"
+	"gopkg.in/olivere/elastic.v5"
 	"net/url"
 	"time"
 )
@@ -19,7 +20,20 @@ func MustInitES(esSpec *url.URL) *elastic.Client {
 	var err error
 
 	utils.MustBackoff(baseESInitDelay, maxESInitRetryCount, func() error {
-		es, err = elastic.NewClient(elastic.SetURL(esSpec.String()), elastic.SetMaxRetries(defaultESMaxRetries), elastic.SetSniff(false), elastic.SetHttpClient(MakeAWSSigningHTTPClient(nil)))
+		options := []elastic.ClientOptionFunc{
+			elastic.SetURL(esSpec.String()),
+			elastic.SetMaxRetries(defaultESMaxRetries),
+			elastic.SetSniff(false),
+			elastic.SetHttpClient(MakeProdHTTPClient(func(attempt rehttp.Attempt) bool { return false })), // The ES lib already implements retries.
+		}
+
+		if esSpec.User != nil {
+			password, _ := esSpec.User.Password()
+			options = append(options, elastic.SetBasicAuth(esSpec.User.Username(), password))
+		}
+		esSpec.User = nil
+
+		es, err = elastic.NewClient(options...)
 		return err
 	})
 

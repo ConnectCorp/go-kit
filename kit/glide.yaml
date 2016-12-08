@@ -42,4 +42,6 @@ import:
 - package: github.com/johnnadratowski/golang-neo4j-bolt-driver
 - package: gopkg.in/olivere/elastic.v2
 - package: github.com/smartystreets/go-aws-auth
-- package: ithub.com/guregu/null
+- package: github.com/guregu/null
+- package: gopkg.in/olivere/elastic.v5
+  version: ^5.0.13
